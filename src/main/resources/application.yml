@@ -1,0 +1,108 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: tapo-backend
+
+  # ===== DATABASE =====
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tapo}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # ===== JPA / HIBERNATE =====
+  jpa:
+    hibernate:
+      # create: Tự tạo schema từ entities (dùng lần đầu khi DB trống)
+      # Sau khi đã có schema, chuyển lại thành validate và dùng Flyway
+      ddl-auto: create
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        # Cho phép Hibernate map kiểu UUID sang PostgreSQL uuid natively
+        id:
+          new_generator_mappings: true
+
+  # ===== FLYWAY MIGRATION =====
+  flyway:
+    # Tắt Flyway tạm thời — dùng Hibernate ddl-auto: create cho lần đầu
+    # Bật lại sau khi đã viết V1__init_schema.sql đầy đủ
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+
+  # ===== SECURITY (OAUTH2) — TẮT TẠM THỜI =====
+  # Bật lại khi có Google Client ID & Secret
+  # security:
+  #   oauth2:
+  #     client:
+  #       registration:
+  #         google:
+  #           client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+  #           client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+  #           scope: email, profile
+
+  # ===== FILE UPLOAD =====
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 25MB
+
+# ===== SERVER =====
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+
+# ===== JWT =====
+jwt:
+  secret: ${JWT_SECRET:tapo-secret-key-must-be-at-least-256-bits-long-for-hs256}
+  access-token-expiration: 900000       # 15 phút (ms)
+  refresh-token-expiration: 604800000   # 7 ngày (ms)
+
+# ===== PAYOS (Chưa làm, tắt tạm thời) =====
+# payos:
+#   client-id: ${PAYOS_CLIENT_ID:your-payos-client-id}
+#   api-key: ${PAYOS_API_KEY:your-payos-api-key}
+#   checksum-key: ${PAYOS_CHECKSUM_KEY:your-payos-checksum-key}
+
+# ===== SUPABASE STORAGE (Chưa làm, tắt tạm thời) =====
+# supabase:
+#   url: ${SUPABASE_URL:https://your-project.supabase.co}
+#   anon-key: ${SUPABASE_ANON_KEY:your-anon-key}
+#   service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:your-service-role-key}
+
+# ===== SPRINGDOC OPENAPI =====
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+    tags-sorter: alpha
+    operations-sorter: method
+
+# ===== LOGGING =====
+logging:
+  level:
+    backend: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
