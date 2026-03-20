@@ -1,6 +1,4 @@
 spring:
-  config:
-    import: optional:file:.env[.properties]
   application:
     name: tapo-backend
 
@@ -92,11 +90,13 @@ jwt:
 # ===== SPRINGDOC OPENAPI =====
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
   swagger-ui:
-    path: /swagger-ui
+    path: /swagger-ui.html
+    url: /v3/api-docs
     tags-sorter: alpha
     operations-sorter: method
+    disable-validator-url: true
 
 # ===== LOGGING =====
 logging:
