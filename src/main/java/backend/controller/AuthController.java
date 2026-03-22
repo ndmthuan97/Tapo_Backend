@@ -36,4 +36,15 @@ public class AuthController {
         return ResponseEntity
                 .ok(ApiResponse.success(CustomCode.SUCCESS.getDefaultMessage(), authService.refreshToken(request)));
     }
+
+    /**
+     * Revoke the provided refresh token from Redis.
+     * Client should include the refresh token in the request body.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody(required = false) TokenRefreshRequest request) {
+        String rt = (request != null) ? request.refreshToken() : null;
+        authService.logout(rt);
+        return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công", null));
+    }
 }
