@@ -11,6 +11,7 @@ import backend.model.entity.User;
 import backend.model.enums.UserRole;
 import backend.model.enums.UserStatus;
 import backend.repository.UserRepository;
+import backend.constants.AppConstants;
 import backend.security.JwtTokenProvider;
 import backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPhoneNumber(request.phoneNumber());
         user.setRole(UserRole.CUSTOMER);
         user.setStatus(UserStatus.ACTIVE);
+        user.setAvatarUrl(AppConstants.DEFAULT_AVATAR);
 
         User savedUser = userRepository.save(user);
         return generateAuthResponse(savedUser);
@@ -97,7 +99,8 @@ public class AuthServiceImpl implements AuthService {
                 user.getEmail(),
                 user.getPhoneNumber(),
                 user.getAvatarUrl(),
-                user.getRole()
+                user.getRole(),
+                user.getStatus()
         );
 
         return new AuthResponse(accessToken, refreshToken, userDto);

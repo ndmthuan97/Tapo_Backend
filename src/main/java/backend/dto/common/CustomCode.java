@@ -19,7 +19,11 @@ public enum CustomCode {
     USER_NOT_FOUND(4008, 404, "Không tìm thấy người dùng"),
     ACCOUNT_LOCKED(4009, 401, "Tài khoản của bạn đã bị khóa"),
     INVALID_REFRESH_TOKEN(4010, 401, "Refresh token không hợp lệ"),
-    EXPIRED_REFRESH_TOKEN(4011, 401, "Refresh token đã hết hạn hoặc không hợp lệ");
+    EXPIRED_REFRESH_TOKEN(4011, 401, "Refresh token đã hết hạn hoặc không hợp lệ"),
+    ADDRESS_NOT_FOUND(4012, 404, "Không tìm thấy địa chỉ"),
+    PASSWORD_INCORRECT(4013, 400, "Mật khẩu hiện tại không đúng"),
+    PASSWORD_MISMATCH(4014, 400, "Mật khẩu xác nhận không khớp"),
+    CANNOT_CHANGE_ADMIN_STATUS(4015, 403, "Không thể thay đổi trạng thái tài khoản Admin");
 
     private final int code;
     private final int httpStatus;
