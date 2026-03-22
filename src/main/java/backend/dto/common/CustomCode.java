@@ -23,7 +23,11 @@ public enum CustomCode {
     ADDRESS_NOT_FOUND(4012, 404, "Không tìm thấy địa chỉ"),
     PASSWORD_INCORRECT(4013, 400, "Mật khẩu hiện tại không đúng"),
     PASSWORD_MISMATCH(4014, 400, "Mật khẩu xác nhận không khớp"),
-    CANNOT_CHANGE_ADMIN_STATUS(4015, 403, "Không thể thay đổi trạng thái tài khoản Admin");
+    CANNOT_CHANGE_ADMIN_STATUS(4015, 403, "Không thể thay đổi trạng thái tài khoản Admin"),
+    PRODUCT_NOT_FOUND(4016, 404, "Không tìm thấy sản phẩm"),
+    CATEGORY_NOT_FOUND(4017, 404, "Không tìm thấy danh mục"),
+    BRAND_NOT_FOUND(4018, 404, "Không tìm thấy thương hiệu"),
+    SLUG_ALREADY_EXISTS(4019, 409, "Slug đã tồn tại, vui lòng dùng slug khác");
 
     private final int code;
     private final int httpStatus;

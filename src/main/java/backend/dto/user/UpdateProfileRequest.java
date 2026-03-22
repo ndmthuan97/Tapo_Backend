@@ -10,5 +10,9 @@ public record UpdateProfileRequest(
         String fullName,
 
         @Pattern(regexp = "^(\\+84|0)[0-9]{9,10}$", message = "Số điện thoại không hợp lệ")
-        String phoneNumber
+        String phoneNumber,
+
+        // URL được upload sẵn lên Supabase Storage từ phía client
+        @Size(max = 1024)
+        String avatarUrl
 ) {}
