@@ -36,11 +36,17 @@ jobs:
       - name: Rename JAR to fixed name
         run: mv target/tapo-backend-*.jar target/tapo-backend.jar
 
+      # Copy web.config to target/ so it deploys alongside the JAR
+      - name: Copy web.config to target
+        run: cp src/main/resources/web.config target/web.config
+
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: tapo-backend-jar
-          path: target/tapo-backend.jar
+          path: |
+            target/tapo-backend.jar
+            target/web.config
           retention-days: 1
 
   # ─────────────────────────────────────────────────────────────────
@@ -74,7 +80,7 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: tapo-backend.jar
+          package: .        # Deploy toàn bộ thư mục (JAR + web.config)
 
       - name: Deployment summary
         run: |
