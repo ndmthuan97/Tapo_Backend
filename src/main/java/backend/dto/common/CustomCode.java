@@ -27,7 +27,13 @@ public enum CustomCode {
     PRODUCT_NOT_FOUND(4016, 404, "Không tìm thấy sản phẩm"),
     CATEGORY_NOT_FOUND(4017, 404, "Không tìm thấy danh mục"),
     BRAND_NOT_FOUND(4018, 404, "Không tìm thấy thương hiệu"),
-    SLUG_ALREADY_EXISTS(4019, 409, "Slug đã tồn tại, vui lòng dùng slug khác");
+    SLUG_ALREADY_EXISTS(4019, 409, "Slug đã tồn tại, vui lòng dùng slug khác"),
+    CART_ITEM_NOT_FOUND(4020, 404, "Không tìm thấy sản phẩm trong giỏ hàng"),
+    ORDER_NOT_FOUND(4021, 404, "Không tìm thấy đơn hàng"),
+    INSUFFICIENT_STOCK(4022, 400, "Sản phẩm không đủ hàng trong kho"),
+    ORDER_CANNOT_CANCEL(4023, 400, "Đơn hàng không thể hủy ở trạng thái hiện tại"),
+    CART_EMPTY(4024, 400, "Giỏ hàng trống, không thể đặt hàng");
+
 
     private final int code;
     private final int httpStatus;
