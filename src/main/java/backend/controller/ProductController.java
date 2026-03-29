@@ -29,17 +29,32 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ProductDto>>> getProducts(
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false)    String search,
-            @RequestParam(required = false)    ProductStatus status
+            @RequestParam(defaultValue = "0")             int page,
+            @RequestParam(defaultValue = "16")            int size,
+            @RequestParam(required = false)               String search,
+            @RequestParam(required = false)               ProductStatus status,
+            @RequestParam(required = false)               UUID categoryId,
+            @RequestParam(required = false)               UUID brandId,
+            @RequestParam(required = false)               Long minPrice,
+            @RequestParam(required = false)               Long maxPrice,
+            @RequestParam(defaultValue = "createdAt,desc") String sort
     ) {
-        return ResponseEntity.ok(ApiResponse.success(productService.getProducts(page, size, search, status)));
+        return ResponseEntity.ok(ApiResponse.success(
+                productService.getProducts(page, size, search, status, categoryId, brandId, minPrice, maxPrice, sort)
+        ));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductDto>> getProduct(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(productService.getProduct(id)));
+    }
+
+    @GetMapping("/{id}/related")
+    public ResponseEntity<ApiResponse<List<ProductDto>>> getRelatedProducts(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "8") int limit
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(productService.getRelatedProducts(id, limit)));
     }
 
     /** Dropdown data for the create/edit form */

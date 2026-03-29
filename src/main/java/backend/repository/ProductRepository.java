@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,8 +23,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     Optional<Product> findByIdAndDeletedFalse(UUID id);
 
     /**
-     * Paginated search across name / brand / category, filtered by status and not deleted.
-     * Uses LOWER() for case-insensitive search.
+     * Paginated search with full filter support:
+     * keyword, status, categoryId, brandId, price range.
      */
     @Query(
         value = """
@@ -32,6 +33,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
             JOIN FETCH p.brand b
             WHERE p.deleted = false
               AND (:status IS NULL OR p.status = :status)
+              AND (:categoryId IS NULL OR c.id = :categoryId)
+              AND (:brandId IS NULL OR b.id = :brandId)
+              AND (:minPrice IS NULL OR p.price >= :minPrice)
+              AND (:maxPrice IS NULL OR p.price <= :maxPrice)
               AND (:search IS NULL OR
                    LOWER(p.name)   LIKE LOWER(CONCAT('%', :search, '%')) OR
                    LOWER(b.name)   LIKE LOWER(CONCAT('%', :search, '%')) OR
@@ -43,6 +48,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
             JOIN p.brand b
             WHERE p.deleted = false
               AND (:status IS NULL OR p.status = :status)
+              AND (:categoryId IS NULL OR c.id = :categoryId)
+              AND (:brandId IS NULL OR b.id = :brandId)
+              AND (:minPrice IS NULL OR p.price >= :minPrice)
+              AND (:maxPrice IS NULL OR p.price <= :maxPrice)
               AND (:search IS NULL OR
                    LOWER(p.name)   LIKE LOWER(CONCAT('%', :search, '%')) OR
                    LOWER(b.name)   LIKE LOWER(CONCAT('%', :search, '%')) OR
@@ -50,8 +59,28 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
             """
     )
     Page<Product> searchProducts(
-            @Param("search") String search,
-            @Param("status") ProductStatus status,
+            @Param("search")     String search,
+            @Param("status")     ProductStatus status,
+            @Param("categoryId") UUID categoryId,
+            @Param("brandId")    UUID brandId,
+            @Param("minPrice")   Long minPrice,
+            @Param("maxPrice")   Long maxPrice,
+            Pageable pageable
+    );
+
+    /** Related products: same category, excluding current product, ACTIVE only */
+    @Query("""
+            SELECT p FROM Product p
+            JOIN FETCH p.category c
+            JOIN FETCH p.brand b
+            WHERE p.deleted = false
+              AND p.status = backend.model.enums.ProductStatus.ACTIVE
+              AND c.id = :categoryId
+              AND p.id <> :excludeId
+            """)
+    List<Product> findRelated(
+            @Param("categoryId") UUID categoryId,
+            @Param("excludeId")  UUID excludeId,
             Pageable pageable
     );
 }

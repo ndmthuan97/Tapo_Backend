@@ -11,9 +11,12 @@ import java.util.UUID;
 
 public interface ProductService {
 
-    Page<ProductDto> getProducts(int page, int size, String search, ProductStatus status);
+    Page<ProductDto> getProducts(int page, int size, String search, ProductStatus status,
+                                 UUID categoryId, UUID brandId, Long minPrice, Long maxPrice, String sort);
 
     ProductDto getProduct(UUID id);
+
+    List<ProductDto> getRelatedProducts(UUID productId, int limit);
 
     ProductDto createProduct(ProductRequest request);
 

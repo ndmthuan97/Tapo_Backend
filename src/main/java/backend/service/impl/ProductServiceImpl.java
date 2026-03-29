@@ -36,11 +36,14 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductDto> getProducts(int page, int size, String search, ProductStatus status) {
-        PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    public Page<ProductDto> getProducts(int page, int size, String search, ProductStatus status,
+                                        UUID categoryId, UUID brandId, Long minPrice, Long maxPrice,
+                                        String sort) {
+        Sort sortObj = parseSort(sort);
+        PageRequest pageable = PageRequest.of(page, size, sortObj);
         String searchParam = (search != null && search.isBlank()) ? null : search;
         return productRepository
-                .searchProducts(searchParam, status, pageable)
+                .searchProducts(searchParam, status, categoryId, brandId, minPrice, maxPrice, pageable)
                 .map(this::toDto);
     }
 
@@ -48,6 +51,18 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductDto getProduct(UUID id) {
         return toDto(findActiveProduct(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDto> getRelatedProducts(UUID productId, int limit) {
+        Product product = findActiveProduct(productId);
+        UUID categoryId = product.getCategory().getId();
+        PageRequest pageable = PageRequest.of(0, limit);
+        return productRepository.findRelated(categoryId, productId, pageable)
+                .stream()
+                .map(this::toDto)
+                .toList();
     }
 
     // ── Write ───────────────────────────────────────────────────────────────────
@@ -141,6 +156,28 @@ public class ProductServiceImpl implements ProductService {
     private Brand findBrand(UUID id) {
         return brandRepository.findById(id)
                 .orElseThrow(() -> new AppException(CustomCode.BRAND_NOT_FOUND));
+    }
+
+    /**
+     * Parse sort string like "price,asc" or "createdAt,desc" into a Sort object.
+     * Defaults to createdAt desc.
+     */
+    private Sort parseSort(String sort) {
+        if (sort == null || sort.isBlank()) return Sort.by("createdAt").descending();
+        String[] parts = sort.split(",");
+        String field     = parts[0].trim();
+        String direction = parts.length > 1 ? parts[1].trim() : "desc";
+        // Whitelist allowed sort fields to prevent injection
+        String safeField = switch (field) {
+            case "price"     -> "price";
+            case "name"      -> "name";
+            case "soldCount" -> "soldCount";
+            case "avgRating" -> "avgRating";
+            default          -> "createdAt";
+        };
+        return "asc".equalsIgnoreCase(direction)
+                ? Sort.by(safeField).ascending()
+                : Sort.by(safeField).descending();
     }
 
     /**
