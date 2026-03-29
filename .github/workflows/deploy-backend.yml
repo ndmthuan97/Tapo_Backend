@@ -44,7 +44,7 @@ jobs:
           retention-days: 1
 
   # ─────────────────────────────────────────────────────────────────
-  # JOB 2: Deploy
+  # JOB 2: Deploy via Service Principal
   # ─────────────────────────────────────────────────────────────────
   deploy:
     name: 🚀 Deploy to Azure App Service
@@ -61,11 +61,16 @@ jobs:
         with:
           name: tapo-backend-jar
 
+      # Login bằng Service Principal (thay thế publish profile)
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: tapo-backend.jar
 
       - name: Deployment summary

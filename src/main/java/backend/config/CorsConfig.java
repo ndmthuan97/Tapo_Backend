@@ -18,7 +18,8 @@ public class CorsConfig {
         // Cho phép frontend dev server và production domain
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "https://tapo-frontend.vercel.app"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
