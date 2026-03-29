@@ -1,0 +1,76 @@
+name: Build & Deploy Backend to Azure
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '21'
+  AZURE_WEBAPP_NAME: 'tapo-api'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 1: Build
+  # ─────────────────────────────────────────────────────────────────
+  build:
+    name: 🔨 Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven (skip tests)
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests --no-transfer-progress
+
+      - name: Rename JAR to fixed name
+        run: mv target/tapo-backend-*.jar target/tapo-backend.jar
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tapo-backend-jar
+          path: target/tapo-backend.jar
+          retention-days: 1
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 2: Deploy
+  # ─────────────────────────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy to Azure App Service
+    runs-on: ubuntu-latest
+    needs: build
+
+    environment:
+      name: production
+      url: https://tapo-api.azurewebsites.net
+
+    steps:
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tapo-backend-jar
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: tapo-backend.jar
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Deployed successfully!"
+          echo "🌐 https://tapo-api.azurewebsites.net"
+          echo "📦 Commit: ${{ github.sha }}"
+          echo "👤 Actor: ${{ github.actor }}"
