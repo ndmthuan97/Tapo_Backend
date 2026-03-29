@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -18,51 +19,75 @@ public class JwtTokenProvider {
     private String jwtSecret;
 
     @Value("${jwt.access-token-expiration}")
-    private long jwtExpirationInMs;
+    private long accessExpirationMs;
 
     @Value("${jwt.refresh-token-expiration}")
-    private long refreshExpirationInMs;
+    private long refreshExpirationMs;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    // ── Token generation ────────────────────────────────────────────────────
+
     public String generateAccessToken(String email) {
-        return generateToken(email, jwtExpirationInMs);
+        return buildToken(email, null, accessExpirationMs);
     }
 
+    /** Generates a refresh token with a unique jti claim embedded. */
     public String generateRefreshToken(String email) {
-        return generateToken(email, refreshExpirationInMs);
+        String jti = UUID.randomUUID().toString();
+        return buildToken(email, jti, refreshExpirationMs);
     }
 
-    private String generateToken(String subject, long expirationParams) {
+    private String buildToken(String email, String jti, long expiryMs) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expirationParams);
-
-        return Jwts.builder()
-                .subject(subject)
+        JwtBuilder builder = Jwts.builder()
+                .subject(email)
                 .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(getSigningKey(), Jwts.SIG.HS256)
-                .compact();
+                .expiration(new Date(now.getTime() + expiryMs))
+                .signWith(getSigningKey(), Jwts.SIG.HS256);
+        if (jti != null) {
+            builder.id(jti);
+        }
+        return builder.compact();
     }
+
+    // ── Claims extraction ────────────────────────────────────────────────────
 
     public String getEmailFromToken(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        return getClaims(token).getSubject();
     }
 
-    public boolean validateToken(String authToken) {
+    /** Extract jti from a refresh token. Returns null if absent. */
+    public String getJtiFromToken(String token) {
+        return getClaims(token).getId();
+    }
+
+    /**
+     * Extract the subject (email) from a potentially-expired token.
+     * Used to identify the user from an expired access token during refresh.
+     */
+    public String getEmailIgnoreExpiry(String token) {
         try {
-            Jwts.parser()
+            return Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build()
-                    .parseSignedClaims(authToken);
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (ExpiredJwtException ex) {
+            // ExpiredJwtException still carries the claims
+            return ex.getClaims().getSubject();
+        }
+    }
+
+    // ── Validation ───────────────────────────────────────────────────────────
+
+    public boolean validateToken(String token) {
+        try {
+            getClaims(token);
             return true;
         } catch (MalformedJwtException ex) {
             log.error("Invalid JWT token");
@@ -71,8 +96,23 @@ public class JwtTokenProvider {
         } catch (UnsupportedJwtException ex) {
             log.error("Unsupported JWT token");
         } catch (IllegalArgumentException ex) {
-            log.error("JWT claims string is empty.");
+            log.error("JWT claims string is empty");
         }
         return false;
+    }
+
+    /** Returns expiry duration for a refresh token in seconds. */
+    public long getRefreshExpirationSeconds() {
+        return refreshExpirationMs / 1000;
+    }
+
+    // ── Private ──────────────────────────────────────────────────────────────
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

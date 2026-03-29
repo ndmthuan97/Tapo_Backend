@@ -2,6 +2,13 @@ spring:
   application:
     name: tapo-backend
 
+  # ===== REDIS (Upstash) =====
+  data:
+    redis:
+      url: ${REDIS_URL}
+      ssl:
+        enabled: true
+
   # ===== DATABASE =====
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tapo}
@@ -20,7 +27,7 @@ spring:
     hibernate:
       # create: Tự tạo schema từ entities (dùng lần đầu khi DB trống)
       # Sau khi đã có schema, chuyển lại thành validate và dùng Flyway
-      ddl-auto: create
+      ddl-auto: update
     show-sql: false
     open-in-view: false
     properties:

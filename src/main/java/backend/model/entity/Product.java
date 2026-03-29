@@ -19,7 +19,8 @@ import java.util.Map;
         @Index(name = "idx_products_brand", columnList = "brand_id"),
         @Index(name = "idx_products_status", columnList = "status"),
         @Index(name = "idx_products_price", columnList = "price"),
-        @Index(name = "idx_products_slug", columnList = "slug", unique = true)
+        @Index(name = "idx_products_slug", columnList = "slug", unique = true),
+        @Index(name = "idx_products_deleted", columnList = "deleted")
 })
 @Getter
 @Setter
@@ -75,6 +76,10 @@ public class Product extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ProductStatus status = ProductStatus.DRAFT;
+
+    /** Soft delete — never physically remove products that may be in historical orders */
+    @Column(nullable = false)
+    private Boolean deleted = false;
 
     // ===== Relationships =====
 

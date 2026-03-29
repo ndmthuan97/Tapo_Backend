@@ -41,6 +41,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/brands", "/api/brands/**").permitAll()
                 .requestMatchers(
                     "/v3/api-docs",
                     "/v3/api-docs/**",

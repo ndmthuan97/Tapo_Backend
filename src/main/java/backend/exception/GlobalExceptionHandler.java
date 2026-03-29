@@ -19,6 +19,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getCustomCode().getCode(), ex.getMessage()));
     }
 
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAppException(AppException ex) {
+        return ResponseEntity.status(ex.getCustomCode().getHttpStatus())
+                .body(ApiResponse.error(ex.getCustomCode().getCode(), ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
