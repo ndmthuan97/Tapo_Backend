@@ -44,7 +44,14 @@ jobs:
           retention-days: 1
 
   # ─────────────────────────────────────────────────────────────────
-  # JOB 2: Deploy via Service Principal
+  # JOB 2: Deploy
+  # Hỗ trợ 2 cách auth — dùng đúng secret tương ứng:
+  #
+  # Cách 1 — Publish Profile (Basic Auth phải được bật trên Azure):
+  #   Secret:  AZURE_WEBAPP_PUBLISH_PROFILE = nội dung file .PublishSettings (XML)
+  #
+  # Cách 2 — Service Principal JSON (từ az ad sp create-for-rbac --sdk-auth):
+  #   Secret:  AZURE_CREDENTIALS = JSON có clientId, clientSecret, subscriptionId, tenantId
   # ─────────────────────────────────────────────────────────────────
   deploy:
     name: 🚀 Deploy to Azure App Service
@@ -61,16 +68,12 @@ jobs:
         with:
           name: tapo-backend-jar
 
-      # Login bằng Service Principal (thay thế publish profile)
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
+      # ── Dùng Publish Profile (Cách 1) ──
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: tapo-backend.jar
 
       - name: Deployment summary
@@ -78,4 +81,3 @@ jobs:
           echo "✅ Deployed successfully!"
           echo "🌐 https://tapo-api.azurewebsites.net"
           echo "📦 Commit: ${{ github.sha }}"
-          echo "👤 Actor: ${{ github.actor }}"
