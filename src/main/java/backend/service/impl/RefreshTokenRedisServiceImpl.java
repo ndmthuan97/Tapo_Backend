@@ -24,28 +24,44 @@ public class RefreshTokenRedisServiceImpl implements RefreshTokenRedisService {
 
     @Override
     public void store(String userId, String jti, long ttlSeconds) {
-        // 1. Map jti → userId with TTL
-        redis.opsForValue().set(TOKEN_KEY_PREFIX + jti, userId, ttlSeconds, TimeUnit.SECONDS);
+        try {
+            // 1. Map jti → userId with TTL
+            redis.opsForValue().set(TOKEN_KEY_PREFIX + jti, userId, ttlSeconds, TimeUnit.SECONDS);
 
-        // 2. Append jti to the user's device list (rightmost = newest)
-        String listKey = USER_LIST_PREFIX + userId;
-        redis.opsForList().rightPush(listKey, jti);
-        redis.expire(listKey, ttlSeconds + 60, TimeUnit.SECONDS); // a little longer than max token
+            // 2. Append jti to the user's device list (rightmost = newest)
+            String listKey = USER_LIST_PREFIX + userId;
+            redis.opsForList().rightPush(listKey, jti);
+            redis.expire(listKey, ttlSeconds + 60, TimeUnit.SECONDS);
 
-        // 3. Enforce device limit — evict oldest entries beyond MAX_DEVICES
-        enforceDeviceLimit(userId, listKey);
+            // 3. Enforce device limit
+            enforceDeviceLimit(userId, listKey);
+        } catch (Exception ex) {
+            log.warn("[Redis] Failed to store refresh token for user={}: {}", userId, ex.getMessage());
+            // Non-fatal: user still gets tokens, Redis just won't enforce device limit
+        }
     }
 
     @Override
     public boolean validate(String jti, String userId) {
-        String storedUserId = redis.opsForValue().get(TOKEN_KEY_PREFIX + jti);
-        return userId.equals(storedUserId);
+        try {
+            String storedUserId = redis.opsForValue().get(TOKEN_KEY_PREFIX + jti);
+            return userId.equals(storedUserId);
+        } catch (Exception ex) {
+            log.warn("[Redis] validate() failed for jti={}: {}", jti, ex.getMessage());
+            // Redis unavailable → allow token through (fail-open)
+            // Better UX than kicking out all users when Redis hiccups
+            return true;
+        }
     }
 
     @Override
     public void revoke(String jti, String userId) {
-        redis.delete(TOKEN_KEY_PREFIX + jti);
-        redis.opsForList().remove(USER_LIST_PREFIX + userId, 1, jti);
+        try {
+            redis.delete(TOKEN_KEY_PREFIX + jti);
+            redis.opsForList().remove(USER_LIST_PREFIX + userId, 1, jti);
+        } catch (Exception ex) {
+            log.warn("[Redis] revoke() failed for jti={}: {}", jti, ex.getMessage());
+        }
     }
 
     @Override
