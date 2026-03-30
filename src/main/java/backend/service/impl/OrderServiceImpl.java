@@ -32,6 +32,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepo;
     private final UserRepository userRepo;
     private final AddressRepository addressRepo;
+    private final VoucherRepository voucherRepo;
+    private final VoucherServiceImpl voucherService;
 
     // ── Mapping helpers ─────────────────────────────────────────────────────────
 
@@ -124,9 +126,20 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingDistrict(address.getDistrict());
         order.setShippingCity(address.getCity());
         order.setSubtotal(subtotal);
-        order.setDiscountAmount(BigDecimal.ZERO);
         order.setShippingFee(SHIPPING_FEE);
-        order.setTotalAmount(subtotal.add(SHIPPING_FEE));
+
+        // 4b. Apply voucher if provided
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (request.voucherCode() != null && !request.voucherCode().isBlank()) {
+            backend.model.entity.Voucher voucher = voucherRepo
+                    .findByCode(request.voucherCode().trim().toUpperCase())
+                    .orElseThrow(() -> new AuthException(CustomCode.VOUCHER_NOT_FOUND));
+            discountAmount = voucherService.applyVoucher(voucher, subtotal);
+            order.setVoucher(voucher);
+        }
+
+        order.setDiscountAmount(discountAmount);
+        order.setTotalAmount(subtotal.subtract(discountAmount).add(SHIPPING_FEE).max(BigDecimal.ZERO));
         order.setStatus(OrderStatus.PENDING);
         order.setPaymentStatus(PaymentStatus.UNPAID);
         order.setCustomerNote(request.customerNote());

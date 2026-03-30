@@ -36,6 +36,17 @@ public enum CustomCode {
     WISHLIST_ALREADY_EXISTS(4025, 409, "Sản phẩm đã có trong danh sách yêu thích"),
     REVIEW_ALREADY_EXISTS(4026, 409, "Bạn đã đánh giá sản phẩm này cho đơn hàng này"),
     REVIEW_NOT_ELIGIBLE(4027, 403, "Bạn chưa mua sản phẩm này hoặc đơn hàng chưa được giao"),
+    REVIEW_NOT_FOUND(4029, 404, "Không tìm thấy đánh giá"),
+    VOUCHER_NOT_FOUND(4030, 404, "Mã giảm giá không tồn tại"),
+    VOUCHER_INACTIVE(4031, 400, "Mã giảm giá đã bị vô hiệu hóa"),
+    VOUCHER_NOT_STARTED(4032, 400, "Mã giảm giá chưa có hiệu lực"),
+    VOUCHER_EXPIRED(4033, 400, "Mã giảm giá đã hết hạn"),
+    VOUCHER_MIN_ORDER(4034, 400, "Đơn hàng chưa đạt giá trị tối thiểu để dùng mã này"),
+    VOUCHER_USAGE_LIMIT(4035, 400, "Mã giảm giá đã đạt giới hạn sử dụng"),
+    VOUCHER_CODE_EXISTS(4036, 409, "Mã giảm giá đã tồn tại"),
+    RETURN_NOT_ELIGIBLE(4037, 400, "Chỉ có thể hoàn trả đơn hàng đã giao thành công"),
+    RETURN_ALREADY_EXISTS(4038, 409, "Yêu cầu hoàn trả đã được gửi cho đơn hàng này"),
+    RETURN_NOT_FOUND(4039, 404, "Không tìm thấy yêu cầu hoàn trả"),
     BLOG_NOT_FOUND(4028, 404, "Không tìm thấy bài viết");
 
 

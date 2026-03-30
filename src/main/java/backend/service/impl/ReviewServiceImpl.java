@@ -1,6 +1,7 @@
 package backend.service.impl;
 
 import backend.dto.common.CustomCode;
+import backend.dto.review.AdminReviewDto;
 import backend.dto.review.CreateReviewRequest;
 import backend.dto.review.ReviewDto;
 import backend.exception.AuthException;
@@ -43,6 +44,25 @@ public class ReviewServiceImpl implements ReviewService {
                 r.getRating(),
                 r.getComment(),
                 r.getImages(),
+                r.getCreatedAt()
+        );
+    }
+
+    private AdminReviewDto toAdminDto(Review r) {
+        User u = r.getUser();
+        Product p = r.getProduct();
+        return new AdminReviewDto(
+                r.getId(),
+                u.getId(),
+                u.getFullName(),
+                u.getAvatarUrl(),
+                p.getId(),
+                p.getName(),
+                p.getThumbnailUrl(),
+                r.getRating(),
+                r.getComment(),
+                r.getImages(),
+                r.getStatus(),
                 r.getCreatedAt()
         );
     }
@@ -96,5 +116,37 @@ public class ReviewServiceImpl implements ReviewService {
         review.setStatus(ReviewStatus.PENDING);
 
         return toDto(reviewRepo.save(review));
+    }
+
+    // ── Admin operations ─────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminReviewDto> listAllReviews(ReviewStatus status, Pageable pageable) {
+        return reviewRepo.findAllForAdmin(status, pageable).map(this::toAdminDto);
+    }
+
+    @Override
+    @Transactional
+    public AdminReviewDto approveReview(UUID reviewId) {
+        Review review = reviewRepo.findByIdForAdmin(reviewId)
+                .orElseThrow(() -> new AuthException(CustomCode.REVIEW_NOT_FOUND));
+        review.setStatus(ReviewStatus.APPROVED);
+        return toAdminDto(reviewRepo.save(review));
+    }
+
+    @Override
+    @Transactional
+    public AdminReviewDto rejectReview(UUID reviewId) {
+        Review review = reviewRepo.findByIdForAdmin(reviewId)
+                .orElseThrow(() -> new AuthException(CustomCode.REVIEW_NOT_FOUND));
+        review.setStatus(ReviewStatus.REJECTED);
+        return toAdminDto(reviewRepo.save(review));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countPendingReviews() {
+        return reviewRepo.countByStatus(ReviewStatus.PENDING);
     }
 }
