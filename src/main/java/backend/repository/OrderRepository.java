@@ -45,5 +45,15 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     """)
     Page<Order> findAllByStatusOptional(OrderStatus status, Pageable pageable);
 
+    /** Admin: fetch single order with details (no user restriction) */
+    @Query("""
+        SELECT o FROM Order o
+        JOIN FETCH o.items oi
+        JOIN FETCH oi.product
+        LEFT JOIN FETCH o.statusHistory
+        WHERE o.id = :id
+    """)
+    Optional<Order> findByIdWithDetail(UUID id);
+
     boolean existsByOrderCode(String orderCode);
 }

@@ -20,4 +20,7 @@ public interface OrderService {
 
     /** Admin: all orders */
     Page<OrderSummary> getAllOrders(int page, int size, OrderStatus status);
+
+    /** Admin: change order status */
+    OrderDto updateOrderStatus(UUID orderId, OrderStatus newStatus, String note);
 }

@@ -79,4 +79,15 @@ public class OrderController {
                 orderService.getAllOrders(page, size, status)
         ));
     }
+
+    @PutMapping("/api/admin/orders/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SALES_STAFF')")
+    public ResponseEntity<ApiResponse<OrderDto>> updateOrderStatus(
+            @PathVariable UUID id,
+            @RequestParam OrderStatus status,
+            @RequestParam(required = false) String note
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công",
+                orderService.updateOrderStatus(id, status, note)));
+    }
 }

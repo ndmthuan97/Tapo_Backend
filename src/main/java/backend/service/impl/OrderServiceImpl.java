@@ -221,4 +221,35 @@ public class OrderServiceImpl implements OrderService {
         var pageable = PageRequest.of(page, Math.min(size, 50));
         return orderRepo.findAllByStatusOptional(status, pageable).map(this::toSummary);
     }
+
+    @Override
+    @Transactional
+    public OrderDto updateOrderStatus(UUID orderId, OrderStatus newStatus, String note) {
+        Order order = orderRepo.findByIdWithDetail(orderId)
+                .orElseThrow(() -> new AuthException(CustomCode.ORDER_NOT_FOUND));
+
+        OrderStatus prev = order.getStatus();
+
+        // Restore stock if cancelling
+        if (newStatus == OrderStatus.CANCELLED && prev != OrderStatus.CANCELLED) {
+            for (OrderItem oi : order.getItems()) {
+                Product p = oi.getProduct();
+                p.setStock(p.getStock() + oi.getQuantity());
+                p.setSoldCount(Math.max(0, p.getSoldCount() - oi.getQuantity()));
+                productRepo.save(p);
+            }
+        }
+
+        order.setStatus(newStatus);
+
+        OrderStatusHistory hist = new OrderStatusHistory();
+        hist.setOrder(order);
+        hist.setFromStatus(prev);
+        hist.setToStatus(newStatus);
+        hist.setNote(note != null && !note.isBlank() ? note : "Admin cập nhật trạng thái");
+        hist.setCreatedAt(Instant.now());
+        order.getStatusHistory().add(hist);
+
+        return toOrderDto(orderRepo.save(order));
+    }
 }

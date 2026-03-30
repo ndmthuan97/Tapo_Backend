@@ -32,7 +32,11 @@ public enum CustomCode {
     ORDER_NOT_FOUND(4021, 404, "Không tìm thấy đơn hàng"),
     INSUFFICIENT_STOCK(4022, 400, "Sản phẩm không đủ hàng trong kho"),
     ORDER_CANNOT_CANCEL(4023, 400, "Đơn hàng không thể hủy ở trạng thái hiện tại"),
-    CART_EMPTY(4024, 400, "Giỏ hàng trống, không thể đặt hàng");
+    CART_EMPTY(4024, 400, "Giỏ hàng trống, không thể đặt hàng"),
+    WISHLIST_ALREADY_EXISTS(4025, 409, "Sản phẩm đã có trong danh sách yêu thích"),
+    REVIEW_ALREADY_EXISTS(4026, 409, "Bạn đã đánh giá sản phẩm này cho đơn hàng này"),
+    REVIEW_NOT_ELIGIBLE(4027, 403, "Bạn chưa mua sản phẩm này hoặc đơn hàng chưa được giao"),
+    BLOG_NOT_FOUND(4028, 404, "Không tìm thấy bài viết");
 
 
     private final int code;
