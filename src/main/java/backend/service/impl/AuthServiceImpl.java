@@ -14,8 +14,10 @@ import backend.repository.UserRepository;
 import backend.constants.AppConstants;
 import backend.security.JwtTokenProvider;
 import backend.service.AuthService;
+import backend.service.EmailVerificationService;
 import backend.service.RefreshTokenRedisService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -33,27 +36,46 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenRedisService refreshTokenRedisService;
+    private final EmailVerificationService emailVerificationService;
 
     // ── Register ─────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new AuthException(CustomCode.EMAIL_ALREADY_EXISTS);
+        try {
+            log.info("[REGISTER] Start for email: {}", request.email());
+
+            if (userRepository.existsByEmail(request.email())) {
+                throw new AuthException(CustomCode.EMAIL_ALREADY_EXISTS);
+            }
+
+            User user = new User();
+            user.setEmail(request.email());
+            user.setPasswordHash(passwordEncoder.encode(request.password()));
+            user.setFullName(request.fullName());
+            user.setRole(UserRole.CUSTOMER);
+            user.setStatus(UserStatus.PENDING_VERIFICATION);
+            user.setAvatarUrl(AppConstants.DEFAULT_AVATAR);
+
+            log.info("[REGISTER] Saving user...");
+            User savedUser = userRepository.save(user);
+            log.info("[REGISTER] User saved with id: {}", savedUser.getId());
+
+            emailVerificationService.sendVerificationEmail(
+                    savedUser.getId().toString(),
+                    savedUser.getEmail(),
+                    savedUser.getFullName()
+            );
+            log.info("[REGISTER] Verification email queued");
+
+            return new AuthResponse(null, null, null);
+        } catch (AuthException ex) {
+            throw ex; // re-throw known errors
+        } catch (Exception ex) {
+            log.error("[REGISTER] UNEXPECTED ERROR: {} - {}", ex.getClass().getName(), ex.getMessage(), ex);
+            throw ex;
         }
-
-        User user = new User();
-        user.setEmail(request.email());
-        user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setFullName(request.fullName());
-        user.setPhoneNumber(request.phoneNumber());
-        user.setRole(UserRole.CUSTOMER);
-        user.setStatus(UserStatus.ACTIVE);
-        user.setAvatarUrl(AppConstants.DEFAULT_AVATAR);
-
-        User savedUser = userRepository.save(user);
-        return generateAuthResponse(savedUser);
     }
 
     // ── Login ─────────────────────────────────────────────────────────────────
@@ -71,6 +93,10 @@ public class AuthServiceImpl implements AuthService {
 
             if (user.getStatus() == UserStatus.LOCKED) {
                 throw new AuthException(CustomCode.ACCOUNT_LOCKED);
+            }
+
+            if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+                throw new AuthException(CustomCode.EMAIL_NOT_VERIFIED);
             }
 
             return generateAuthResponse(user);

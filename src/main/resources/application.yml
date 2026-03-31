@@ -2,6 +2,21 @@ spring:
   application:
     name: tapo-backend
 
+  # ===== SMTP (JavaMailSender) =====
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        debug: false
+
   # ===== REDIS (Upstash) =====
   data:
     redis:
@@ -44,13 +59,11 @@ spring:
 
   # ===== FLYWAY MIGRATION =====
   flyway:
-    # Tắt Flyway tạm thời — dùng Hibernate ddl-auto: create cho lần đầu
-    # Bật lại sau khi đã viết V1__init_schema.sql đầy đủ
-    enabled: false
+    enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    baseline-version: 0
-    validate-on-migrate: true
+    baseline-version: 1
+    validate-on-migrate: false
 
   # ===== SECURITY (OAUTH2) — TẮT TẠM THỜI =====
   # Bật lại khi có Google Client ID & Secret
@@ -113,3 +126,9 @@ logging:
     org.hibernate.type.descriptor.sql: TRACE
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ===== APP CONFIG =====
+app:
+  base-url: ${APP_BASE_URL:http://localhost:5173}
+  mail:
+    from-name: ${MAIL_FROM_NAME:Tapo Store}

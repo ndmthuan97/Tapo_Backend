@@ -2,6 +2,7 @@ package backend.exception;
 
 import backend.dto.common.ApiResponse;
 import backend.dto.common.CustomCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -39,6 +41,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex) {
+        log.error("[UNHANDLED EXCEPTION] {} : {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
         return ResponseEntity.status(CustomCode.INTERNAL_SERVER_ERROR.getHttpStatus())
                 .body(ApiResponse.error(CustomCode.INTERNAL_SERVER_ERROR.getCode(), CustomCode.INTERNAL_SERVER_ERROR.getDefaultMessage()));
     }

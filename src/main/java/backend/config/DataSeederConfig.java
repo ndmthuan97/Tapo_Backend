@@ -5,6 +5,10 @@ import backend.model.enums.AuthProvider;
 import backend.model.enums.UserRole;
 import backend.model.enums.UserStatus;
 import backend.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -20,12 +24,29 @@ public class DataSeederConfig {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PlatformTransactionManager transactionManager;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Bean
     @Profile("!prod")   // Chỉ chạy khi không ở môi trường production
     public CommandLineRunner seedData() {
         return args -> {
             log.info("Checking seed data...");
+
+            // Fix PostgreSQL constraint manually since Flyway isn't triggered
+            try {
+                TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+                transactionTemplate.executeWithoutResult(status -> {
+                    log.info("Fixing users_status_check constraint to include PENDING_VERIFICATION...");
+                    entityManager.createNativeQuery("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check").executeUpdate();
+                    entityManager.createNativeQuery("ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('ACTIVE', 'LOCKED', 'INACTIVE', 'PENDING_VERIFICATION'))").executeUpdate();
+                    log.info("Successfully updated users_status_check constraint.");
+                });
+            } catch (Exception e) {
+                log.warn("Could not alter users_status_check constraint: {}", e.getMessage());
+            }
 
             // Seed từng user theo email — idempotent: chỉ tạo nếu chưa tồn tại
             seedUserIfAbsent("admin@tapo.vn",       "Admin@123",     "Quản Trị Viên",     "0900000001", UserRole.ADMIN);

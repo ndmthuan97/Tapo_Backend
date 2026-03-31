@@ -47,6 +47,8 @@ public enum CustomCode {
     RETURN_NOT_ELIGIBLE(4037, 400, "Chỉ có thể hoàn trả đơn hàng đã giao thành công"),
     RETURN_ALREADY_EXISTS(4038, 409, "Yêu cầu hoàn trả đã được gửi cho đơn hàng này"),
     RETURN_NOT_FOUND(4039, 404, "Không tìm thấy yêu cầu hoàn trả"),
+    EMAIL_NOT_VERIFIED(4040, 403, "Email chưa được xác thực. Vui lòng kiểm tra hộp thư của bạn."),
+    VERIFICATION_TOKEN_INVALID(4041, 400, "Link xác thực không hợp lệ hoặc đã hết hạn."),
     BLOG_NOT_FOUND(4028, 404, "Không tìm thấy bài viết");
 
 
