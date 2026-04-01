@@ -49,6 +49,8 @@ public enum CustomCode {
     RETURN_NOT_FOUND(4039, 404, "Không tìm thấy yêu cầu hoàn trả"),
     EMAIL_NOT_VERIFIED(4040, 403, "Email chưa được xác thực. Vui lòng kiểm tra hộp thư của bạn."),
     VERIFICATION_TOKEN_INVALID(4041, 400, "Link xác thực không hợp lệ hoặc đã hết hạn."),
+    RESET_TOKEN_INVALID(4042, 400, "Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."),
+    RESET_TOKEN_EXPIRED(4043, 400, "Link đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại."),
     BLOG_NOT_FOUND(4028, 404, "Không tìm thấy bài viết");
 
 

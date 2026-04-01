@@ -65,16 +65,16 @@ spring:
     baseline-version: 1
     validate-on-migrate: false
 
-  # ===== SECURITY (OAUTH2) — TẮT TẠM THỜI =====
-  # Bật lại khi có Google Client ID & Secret
-  # security:
-  #   oauth2:
-  #     client:
-  #       registration:
-  #         google:
-  #           client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
-  #           client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
-  #           scope: email, profile
+  # ===== SECURITY (OAUTH2) =====
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            scope: email, profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
   # ===== FILE UPLOAD =====
   servlet:
@@ -121,11 +121,17 @@ springdoc:
 # ===== LOGGING =====
 logging:
   level:
-    backend: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
+    backend: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
+    org.springframework.security: INFO
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.web: WARN
+  file:
+    name: ./logs/app.log
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss} %-5level %logger{30} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 # ===== APP CONFIG =====
 app:

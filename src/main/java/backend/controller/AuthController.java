@@ -8,6 +8,9 @@ import backend.dto.common.ApiResponse;
 import backend.dto.common.CustomCode;
 import backend.service.AuthService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,4 +50,40 @@ public class AuthController {
         authService.logout(rt);
         return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công", null));
     }
+
+    /**
+     * POST /api/auth/forgot-password
+     * Body: { "email": "user@example.com" }
+     * Always returns 200 regardless of whether email exists (security best practice).
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.email());
+        return ResponseEntity.ok(ApiResponse.success(
+                "Nếu email tồn tại, một liên kết đặt lại mật khẩu đã được gửi.", null
+        ));
+    }
+
+    /**
+     * POST /api/auth/reset-password
+     * Body: { "token": "uuid", "newPassword": "..." }
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(ApiResponse.success(
+                "Mật khẩu đã được đặt lại thành công. Bạn có thể đăng nhập ngay.", null
+        ));
+    }
+
+    // ── Inner request records ─────────────────────────────────────────────────
+
+    record ForgotPasswordRequest(
+            @NotBlank @Email String email
+    ) {}
+
+    record ResetPasswordRequest(
+            @NotBlank String token,
+            @NotBlank @Size(min = 6, max = 100) String newPassword
+    ) {}
 }

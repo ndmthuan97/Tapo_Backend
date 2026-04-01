@@ -15,12 +15,12 @@ import backend.constants.AppConstants;
 import backend.security.JwtTokenProvider;
 import backend.service.AuthService;
 import backend.service.EmailVerificationService;
+import backend.service.PasswordResetService;
 import backend.service.RefreshTokenRedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,6 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenRedisService refreshTokenRedisService;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
 
     // ── Register ─────────────────────────────────────────────────────────────
 
@@ -84,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
             );
 
@@ -155,6 +156,46 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception ignored) {
             // Malformed / expired token during logout — silently ignore
         }
+    }
+
+    // ── Forgot Password ───────────────────────────────────────────────────────
+
+    @Override
+    public void forgotPassword(String email) {
+        // Silently ignore unknown email — never reveal whether email exists
+        userRepository.findByEmail(email.trim().toLowerCase()).ifPresent(user -> {
+            if (user.getStatus() != UserStatus.LOCKED) {
+                passwordResetService.sendResetEmail(
+                        user.getId().toString(),
+                        user.getEmail(),
+                        user.getFullName()
+                );
+            }
+        });
+    }
+
+    // ── Reset Password ────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        String userId = passwordResetService.validateResetToken(token);
+
+        User user = userRepository.findById(java.util.UUID.fromString(userId))
+                .orElseThrow(() -> new AuthException(CustomCode.USER_NOT_FOUND));
+
+        // Update password
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        // Activate account if still pending (edge case)
+        if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+            user.setStatus(UserStatus.ACTIVE);
+        }
+        userRepository.save(user);
+
+        // One-time use — invalidate token
+        passwordResetService.invalidateToken(token, userId);
+
+        log.info("[PasswordReset] Password reset successfully for user {}", user.getEmail());
     }
 
     // ── Private helper ────────────────────────────────────────────────────────
