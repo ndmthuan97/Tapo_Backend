@@ -38,9 +38,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
               AND (:minPrice IS NULL OR p.price >= :minPrice)
               AND (:maxPrice IS NULL OR p.price <= :maxPrice)
               AND (:search IS NULL OR
-                   LOWER(p.name)   LIKE LOWER(CONCAT('%', :search, '%')) OR
-                   LOWER(b.name)   LIKE LOWER(CONCAT('%', :search, '%')) OR
-                   LOWER(c.name)   LIKE LOWER(CONCAT('%', :search, '%')))
+                   LOWER(p.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR
+                   LOWER(b.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR
+                   LOWER(c.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
             """,
         countQuery = """
             SELECT COUNT(p) FROM Product p
@@ -53,9 +53,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
               AND (:minPrice IS NULL OR p.price >= :minPrice)
               AND (:maxPrice IS NULL OR p.price <= :maxPrice)
               AND (:search IS NULL OR
-                   LOWER(p.name)   LIKE LOWER(CONCAT('%', :search, '%')) OR
-                   LOWER(b.name)   LIKE LOWER(CONCAT('%', :search, '%')) OR
-                   LOWER(c.name)   LIKE LOWER(CONCAT('%', :search, '%')))
+                   LOWER(p.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR
+                   LOWER(b.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR
+                   LOWER(c.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
             """
     )
     Page<Product> searchProducts(

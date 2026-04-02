@@ -20,13 +20,13 @@ spring:
   # ===== REDIS (Upstash) =====
   data:
     redis:
-      url: ${REDIS_URL}
-      ssl:
-        enabled: true
+      url: ${REDIS_URL:redis://localhost:6379}
+      # ssl:
+      #   enabled: true
 
   # ===== DATABASE =====
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tapo}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tapo}?sslmode=require
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
@@ -101,11 +101,12 @@ jwt:
 #   api-key: ${PAYOS_API_KEY:your-payos-api-key}
 #   checksum-key: ${PAYOS_CHECKSUM_KEY:your-payos-checksum-key}
 
-# ===== SUPABASE STORAGE (Chưa làm, tắt tạm thời) =====
-# supabase:
-#   url: ${SUPABASE_URL:https://your-project.supabase.co}
-#   anon-key: ${SUPABASE_ANON_KEY:your-anon-key}
-#   service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:your-service-role-key}
+# ===== SUPABASE STORAGE =====
+supabase:
+  url: ${SUPABASE_URL:https://your-project.supabase.co}
+  anon-key: ${SUPABASE_ANON_KEY:your-anon-key}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:your-service-role-key}
+  bucket: ${SUPABASE_BUCKET:tapo-images}
 
 # ===== SPRINGDOC OPENAPI =====
 springdoc:

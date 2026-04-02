@@ -12,9 +12,16 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class BackendApplication {
 
 	public static void main(String[] args) {
-		Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-		dotenv.entries().forEach(e -> System.setProperty(e.getKey(), e.getValue()));
+		try {
+			Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+			dotenv.entries().forEach(e -> {
+				if (System.getProperty(e.getKey()) == null) {
+					System.setProperty(e.getKey(), e.getValue());
+				}
+			});
+		} catch (Exception e) {
+			System.err.println("Warning: Could not load .env configuration. " + e.getMessage());
+		}
 		SpringApplication.run(BackendApplication.class, args);
 	}
-
 }
