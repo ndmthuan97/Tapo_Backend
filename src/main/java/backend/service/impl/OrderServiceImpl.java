@@ -2,6 +2,7 @@ package backend.service.impl;
 
 import backend.dto.order.*;
 import backend.dto.common.CustomCode;
+import backend.exception.AppException;
 import backend.exception.AuthException;
 import backend.model.entity.*;
 import backend.model.enums.OrderStatus;
@@ -57,6 +58,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderDto toOrderDto(Order o) {
         return new OrderDto(
                 o.getId(), o.getOrderCode(), o.getStatus(), o.getPaymentStatus(),
+                o.getPaymentMethod(),
                 o.getShippingRecipientName(), o.getShippingPhone(),
                 o.getShippingAddress(), o.getShippingDistrict(), o.getShippingCity(),
                 o.getSubtotal(), o.getDiscountAmount(), o.getShippingFee(), o.getTotalAmount(),
@@ -142,6 +144,11 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalAmount(subtotal.subtract(discountAmount).add(SHIPPING_FEE).max(BigDecimal.ZERO));
         order.setStatus(OrderStatus.PENDING);
         order.setPaymentStatus(PaymentStatus.UNPAID);
+        // Normalize paymentMethod: default COD nếu không gửi lên
+        String method = (request.paymentMethod() != null && !request.paymentMethod().isBlank())
+                ? request.paymentMethod().toUpperCase()
+                : "COD";
+        order.setPaymentMethod(method);
         order.setCustomerNote(request.customerNote());
 
         // 5. Build OrderItems + deduct stock (batch update để tránh N+1)

@@ -72,6 +72,10 @@ public class Order extends BaseEntity {
     @Column(name = "payment_status", nullable = false, length = 20)
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
+    /** Phương thức thanh toán: COD, VNPAY, MOMO, BANK */
+    @Column(name = "payment_method", length = 20)
+    private String paymentMethod = "COD";
+
     @Column(name = "customer_note", columnDefinition = "TEXT")
     private String customerNote;
 

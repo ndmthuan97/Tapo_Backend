@@ -14,6 +14,7 @@ public record OrderDto(
         String orderCode,
         OrderStatus status,
         PaymentStatus paymentStatus,
+        String paymentMethod,
 
         // Shipping address snapshot
         String shippingRecipientName,
@@ -33,3 +34,4 @@ public record OrderDto(
         List<OrderStatusHistoryDto> statusHistory,
         Instant createdAt
 ) {}
+

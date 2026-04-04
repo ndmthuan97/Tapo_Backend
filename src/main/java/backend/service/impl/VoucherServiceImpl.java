@@ -10,6 +10,7 @@ import backend.model.entity.Voucher;
 import backend.model.enums.DiscountType;
 import backend.model.enums.VoucherStatus;
 import backend.repository.VoucherRepository;
+import backend.service.VoucherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class VoucherServiceImpl {
+public class VoucherServiceImpl implements VoucherService {
 
     private final VoucherRepository voucherRepo;
 

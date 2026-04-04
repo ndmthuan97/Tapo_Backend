@@ -5,5 +5,8 @@ import java.util.UUID;
 public record CreateOrderRequest(
         UUID addressId,
         String customerNote,
-        String voucherCode
+        String voucherCode,
+        /** Phương thức thanh toán: COD, VNPAY, MOMO, BANK */
+        String paymentMethod
 ) {}
+
