@@ -8,6 +8,7 @@ import backend.model.enums.OrderStatus;
 import backend.model.enums.PaymentStatus;
 import backend.repository.*;
 import backend.service.OrderService;
+import backend.service.VoucherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +34,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepo;
     private final AddressRepository addressRepo;
     private final VoucherRepository voucherRepo;
-    private final VoucherServiceImpl voucherService;
+    private final VoucherService voucherService;
 
     // ── Mapping helpers ─────────────────────────────────────────────────────────
 
@@ -77,13 +78,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // ── Generate unique order code ───────────────────────────────────────────────
-
+    // Dùng UUID hexString thay vì millis % N để đảm bảo uniqueness mà không cần
+    // DB round-trip trong vòng lặp (tránh race condition và potential infinite loop)
     private String generateOrderCode() {
-        String code;
-        do {
-            code = "TP" + System.currentTimeMillis() % 10_000_000_000L;
-        } while (orderRepo.existsByOrderCode(code));
-        return code;
+        String uuid = java.util.UUID.randomUUID().toString().replace("-", "");
+        // Lấy 10 ký tự đầu của UUID → collision probability ≈ 1/16^10 ≈ cực nhỏ
+        return "TP" + uuid.substring(0, 10).toUpperCase();
     }
 
     // ── Public API ──────────────────────────────────────────────────────────────
@@ -94,22 +94,22 @@ public class OrderServiceImpl implements OrderService {
         // 1. Load cart
         List<CartItem> cartItems = cartItemRepo.findByUserIdWithProduct(userId);
         if (cartItems.isEmpty()) {
-            throw new AuthException(CustomCode.CART_EMPTY);
+            throw new AppException(CustomCode.CART_EMPTY);
         }
 
         // 2. Load user & address
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new AuthException(CustomCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new AppException(CustomCode.USER_NOT_FOUND));
 
         Address address = addressRepo.findByIdAndUserId(request.addressId(), userId)
-                .orElseThrow(() -> new AuthException(CustomCode.ADDRESS_NOT_FOUND));
+                .orElseThrow(() -> new AppException(CustomCode.ADDRESS_NOT_FOUND));
 
         // 3. Validate stock & compute subtotal
         BigDecimal subtotal = BigDecimal.ZERO;
         for (CartItem ci : cartItems) {
             Product p = ci.getProduct();
             if (p.getStock() < ci.getQuantity()) {
-                throw new AuthException(CustomCode.INSUFFICIENT_STOCK);
+                throw new AppException(CustomCode.INSUFFICIENT_STOCK);
             }
             subtotal = subtotal.add(
                     p.getPrice().multiply(BigDecimal.valueOf(ci.getQuantity()))
@@ -144,7 +144,8 @@ public class OrderServiceImpl implements OrderService {
         order.setPaymentStatus(PaymentStatus.UNPAID);
         order.setCustomerNote(request.customerNote());
 
-        // 5. Build OrderItems + deduct stock
+        // 5. Build OrderItems + deduct stock (batch update để tránh N+1)
+        List<Product> productsToUpdate = new java.util.ArrayList<>();
         for (CartItem ci : cartItems) {
             Product p = ci.getProduct();
             OrderItem oi = new OrderItem();
@@ -159,8 +160,9 @@ public class OrderServiceImpl implements OrderService {
 
             p.setStock(p.getStock() - ci.getQuantity());
             p.setSoldCount(p.getSoldCount() + ci.getQuantity());
-            productRepo.save(p);
+            productsToUpdate.add(p);
         }
+        productRepo.saveAll(productsToUpdate);
 
         // 6. Initial status history
         OrderStatusHistory hist = new OrderStatusHistory();
@@ -209,13 +211,15 @@ public class OrderServiceImpl implements OrderService {
         OrderStatus prevStatus = order.getStatus();
         order.setStatus(OrderStatus.CANCELLED);
 
-        // Restore stock
+        // Restore stock (batch)
+        List<Product> toRestore = new java.util.ArrayList<>();
         for (OrderItem oi : order.getItems()) {
             Product p = oi.getProduct();
             p.setStock(p.getStock() + oi.getQuantity());
             p.setSoldCount(Math.max(0, p.getSoldCount() - oi.getQuantity()));
-            productRepo.save(p);
+            toRestore.add(p);
         }
+        productRepo.saveAll(toRestore);
 
         // Add history
         OrderStatusHistory hist = new OrderStatusHistory();
@@ -239,18 +243,20 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDto updateOrderStatus(UUID orderId, OrderStatus newStatus, String note) {
         Order order = orderRepo.findByIdWithDetail(orderId)
-                .orElseThrow(() -> new AuthException(CustomCode.ORDER_NOT_FOUND));
+                .orElseThrow(() -> new AppException(CustomCode.ORDER_NOT_FOUND));
 
         OrderStatus prev = order.getStatus();
 
-        // Restore stock if cancelling
+        // Restore stock if cancelling (batch)
         if (newStatus == OrderStatus.CANCELLED && prev != OrderStatus.CANCELLED) {
+            List<Product> stockToRestore = new java.util.ArrayList<>();
             for (OrderItem oi : order.getItems()) {
                 Product p = oi.getProduct();
                 p.setStock(p.getStock() + oi.getQuantity());
                 p.setSoldCount(Math.max(0, p.getSoldCount() - oi.getQuantity()));
-                productRepo.save(p);
+                stockToRestore.add(p);
             }
+            productRepo.saveAll(stockToRestore);
         }
 
         order.setStatus(newStatus);

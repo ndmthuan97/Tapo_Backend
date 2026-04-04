@@ -51,7 +51,10 @@ public enum CustomCode {
     VERIFICATION_TOKEN_INVALID(4041, 400, "Link xác thực không hợp lệ hoặc đã hết hạn."),
     RESET_TOKEN_INVALID(4042, 400, "Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."),
     RESET_TOKEN_EXPIRED(4043, 400, "Link đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại."),
-    BLOG_NOT_FOUND(4028, 404, "Không tìm thấy bài viết");
+    BLOG_NOT_FOUND(4028, 404, "Không tìm thấy bài viết"),
+    PAYMENT_ALREADY_COMPLETED(4050, 400, "Đơn hàng này đã được thanh toán"),
+    PAYMENT_FAILED(4051, 402, "Thanh toán thất bại"),
+    PAYMENT_NOT_FOUND(4052, 404, "Không tìm thấy thông tin thanh toán");
 
 
     private final int code;

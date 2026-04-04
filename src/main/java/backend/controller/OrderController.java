@@ -7,6 +7,7 @@ import backend.dto.order.OrderSummary;
 import backend.model.enums.OrderStatus;
 import backend.security.CustomUserDetails;
 import backend.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,7 @@ public class OrderController {
     @PostMapping("/api/orders")
     public ResponseEntity<ApiResponse<OrderDto>> createOrder(
             @AuthenticationPrincipal CustomUserDetails principal,
-            @RequestBody CreateOrderRequest request
+            @Valid @RequestBody CreateOrderRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Đặt hàng thành công",

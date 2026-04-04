@@ -3,13 +3,13 @@ package backend.exception;
 import backend.dto.common.ApiResponse;
 import backend.dto.common.CustomCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -30,19 +30,32 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
-            
+
         List<String> errors = ex.getBindingResult().getAllErrors().stream()
                 .map(error -> error.getDefaultMessage())
-                .collect(Collectors.toList());
-                
+                .toList();
+
         return ResponseEntity.status(CustomCode.VALIDATION_FAILED.getHttpStatus())
-                .body(ApiResponse.error(CustomCode.VALIDATION_FAILED.getCode(), CustomCode.VALIDATION_FAILED.getDefaultMessage(), errors));
+                .body(ApiResponse.error(CustomCode.VALIDATION_FAILED.getCode(),
+                        CustomCode.VALIDATION_FAILED.getDefaultMessage(), errors));
+    }
+
+    /**
+     * Xử lý RuntimeException có message rõ ràng (vd: PayOS, 3rd party services).
+     * Trả 422 Unprocessable Entity thay vì 500 để FE phân biệt được.
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex) {
+        log.warn("[RUNTIME EXCEPTION] {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(CustomCode.INTERNAL_SERVER_ERROR.getCode(), ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex) {
         log.error("[UNHANDLED EXCEPTION] {} : {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
         return ResponseEntity.status(CustomCode.INTERNAL_SERVER_ERROR.getHttpStatus())
-                .body(ApiResponse.error(CustomCode.INTERNAL_SERVER_ERROR.getCode(), CustomCode.INTERNAL_SERVER_ERROR.getDefaultMessage()));
+                .body(ApiResponse.error(CustomCode.INTERNAL_SERVER_ERROR.getCode(),
+                        CustomCode.INTERNAL_SERVER_ERROR.getDefaultMessage()));
     }
 }

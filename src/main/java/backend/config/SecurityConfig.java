@@ -57,6 +57,8 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/brands", "/api/brands/**").permitAll()
+                // Webhook từ third-party
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/payments/payos-webhook").permitAll()
                 // Blog — fully public read
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blog", "/api/blog/**").permitAll()
                 // Reviews — public read, authenticated write

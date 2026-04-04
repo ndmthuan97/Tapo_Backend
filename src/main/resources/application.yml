@@ -95,11 +95,11 @@ jwt:
   access-token-expiration: 900000       # 15 phút (ms)
   refresh-token-expiration: 604800000   # 7 ngày (ms)
 
-# ===== PAYOS (Chưa làm, tắt tạm thời) =====
-# payos:
-#   client-id: ${PAYOS_CLIENT_ID:your-payos-client-id}
-#   api-key: ${PAYOS_API_KEY:your-payos-api-key}
-#   checksum-key: ${PAYOS_CHECKSUM_KEY:your-payos-checksum-key}
+# ===== PAYOS =====
+payos:
+  client-id: ${PAYOS_CLIENT_ID:your-payos-client-id}
+  api-key: ${PAYOS_API_KEY:your-payos-api-key}
+  checksum-key: ${PAYOS_CHECKSUM_KEY:your-payos-checksum-key}
 
 # ===== SUPABASE STORAGE =====
 supabase:
