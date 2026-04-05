@@ -23,4 +23,7 @@ public interface OrderService {
 
     /** Admin: change order status */
     OrderDto updateOrderStatus(UUID orderId, OrderStatus newStatus, String note);
+
+    /** Admin: get single order detail (no userId restriction) */
+    OrderDto adminGetOrderDetail(UUID orderId);
 }

@@ -8,6 +8,8 @@ import backend.model.entity.*;
 import backend.model.enums.OrderStatus;
 import backend.model.enums.PaymentStatus;
 import backend.repository.*;
+import backend.service.EmailService;
+import backend.service.NotificationService;
 import backend.service.OrderService;
 import backend.service.VoucherService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,8 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepo;
     private final VoucherRepository voucherRepo;
     private final VoucherService voucherService;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
 
     // ── Mapping helpers ─────────────────────────────────────────────────────────
 
@@ -184,6 +188,14 @@ public class OrderServiceImpl implements OrderService {
         // 7. Clear cart
         cartItemRepo.deleteAllByUserId(userId);
 
+        // 8. Send async email + WS notification — both @Async, không block transaction
+        emailService.sendOrderConfirmation(saved);
+        notificationService.notifyNewOrder(
+                saved.getOrderCode(),
+                saved.getShippingRecipientName(),
+                saved.getTotalAmount().longValue()
+        );
+
         return toOrderDto(saved);
     }
 
@@ -277,5 +289,13 @@ public class OrderServiceImpl implements OrderService {
         order.getStatusHistory().add(hist);
 
         return toOrderDto(orderRepo.save(order));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderDto adminGetOrderDetail(UUID orderId) {
+        Order order = orderRepo.findByIdWithDetail(orderId)
+                .orElseThrow(() -> new AppException(CustomCode.ORDER_NOT_FOUND));
+        return toOrderDto(order);
     }
 }

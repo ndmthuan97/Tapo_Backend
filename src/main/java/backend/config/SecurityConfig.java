@@ -63,6 +63,8 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blog", "/api/blog/**").permitAll()
                 // Reviews — public read, authenticated write
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/*/reviews").permitAll()
+                // Contact form — public submit (no auth needed)
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/contact").permitAll()
                 .requestMatchers(
                     "/v3/api-docs",
                     "/v3/api-docs/**",
@@ -73,6 +75,7 @@ public class SecurityConfig {
             );
 
         http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(rateLimitFilter(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         // OAuth2 login — Google redirect flow
@@ -111,5 +114,10 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public backend.security.RateLimitFilter rateLimitFilter() {
+        return new backend.security.RateLimitFilter();
     }
 }

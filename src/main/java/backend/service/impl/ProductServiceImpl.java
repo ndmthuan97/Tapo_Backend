@@ -15,6 +15,9 @@ import backend.repository.ProductRepository;
 import backend.service.ProductService;
 import backend.util.SlugUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -49,6 +53,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    // java-pro: cache single product by ID -- TTL 5m (configured in RedisConfig)
+    @Cacheable(value = "product-detail", key = "#id")
     public ProductDto getProduct(UUID id) {
         return toDto(findActiveProduct(id));
     }
@@ -92,6 +98,11 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    // java-pro: @Caching for multiple evictions -- avoid stale product-detail + metadata
+    @Caching(evict = {
+        @CacheEvict(value = "product-detail", key = "#id"),
+        @CacheEvict(value = "products",       allEntries = true)
+    })
     public ProductDto updateProduct(UUID id, ProductRequest request) {
         Product product   = findActiveProduct(id);
         Category category = findCategory(request.categoryId());
@@ -115,16 +126,39 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "product-detail", key = "#id"),
+        @CacheEvict(value = "products",       allEntries = true)
+    })
     public void deleteProduct(UUID id) {
         Product product = findActiveProduct(id);
         product.setDeleted(true);
         productRepository.save(product);
     }
 
+    @Override
+    @Transactional
+    public void bulkDelete(Set<UUID> ids) {
+        // Fetch only existing products to avoid exceptions for missing IDs (idempotent)
+        List<Product> targets = productRepository.findAllById(ids);
+        targets.forEach(p -> p.setDeleted(true));
+        productRepository.saveAll(targets);
+    }
+
+    @Override
+    @Transactional
+    public void bulkUpdateStatus(Set<UUID> ids, ProductStatus status) {
+        List<Product> targets = productRepository.findAllById(ids);
+        targets.forEach(p -> p.setStatus(status));
+        productRepository.saveAll(targets);
+    }
+
     // ── Metadata ────────────────────────────────────────────────────────────────
 
     @Override
     @Transactional(readOnly = true)
+    // java-pro: metadata (categories/brands) changes infrequently -- 30min TTL in RedisConfig
+    @Cacheable(value = "metadata", key = "'categories'")
     public List<SimpleRefDto> getAllCategories() {
         return categoryRepository.findAllByIsVisibleTrueOrderBySortOrderAsc()
                 .stream()
@@ -134,6 +168,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "metadata", key = "'brands'")
     public List<SimpleRefDto> getAllBrands() {
         return brandRepository.findAllByIsVisibleTrueOrderByNameAsc()
                 .stream()

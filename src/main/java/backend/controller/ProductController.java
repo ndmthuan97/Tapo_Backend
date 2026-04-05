@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -91,4 +92,35 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.ok(ApiResponse.success("Product deleted", null));
     }
+
+    /**
+     * Bulk-delete products by ID list.
+     * Idempotent: IDs not found are silently skipped.
+     */
+    @DeleteMapping("/bulk")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> bulkDelete(
+            @RequestBody Set<UUID> ids
+    ) {
+        productService.bulkDelete(ids);
+        return ResponseEntity.ok(ApiResponse.success(ids.size() + " sản phẩm đã bị xóa", null));
+    }
+
+    /**
+     * Bulk-update product status (ACTIVE / INACTIVE / DRAFT).
+     */
+    @PatchMapping("/bulk-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> bulkUpdateStatus(
+            @RequestBody BulkStatusRequest body
+    ) {
+        productService.bulkUpdateStatus(body.ids(), body.status());
+        return ResponseEntity.ok(ApiResponse.success(body.ids().size() + " sản phẩm đã được cập nhật", null));
+    }
+
+    /** DTO for bulk status update request body */
+    record BulkStatusRequest(
+            Set<UUID> ids,
+            ProductStatus status
+    ) {}
 }

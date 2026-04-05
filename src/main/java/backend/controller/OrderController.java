@@ -91,4 +91,13 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công",
                 orderService.updateOrderStatus(id, status, note)));
     }
+
+    @GetMapping("/api/admin/orders/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SALES_STAFF')")
+    public ResponseEntity<ApiResponse<OrderDto>> adminGetOrderDetail(
+            @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.adminGetOrderDetail(id)));
+    }
 }

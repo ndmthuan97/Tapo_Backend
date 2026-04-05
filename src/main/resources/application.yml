@@ -17,12 +17,17 @@ spring:
             required: true
         debug: false
 
-  # ===== REDIS (Upstash) =====
+  # ===== REDIS (Upstash TLS) =====
   data:
     redis:
       url: ${REDIS_URL:redis://localhost:6379}
-      # ssl:
-      #   enabled: true
+      ssl:
+        enabled: true
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
 
   # ===== DATABASE =====
   datasource:
@@ -131,11 +136,20 @@ logging:
   file:
     name: ./logs/app.log
   pattern:
-    console: "%d{HH:mm:ss} %-5level %logger{30} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    # %X{traceId} -- MDC field from CorrelationIdFilter (java-pro: structured logging)
+    console: "%d{HH:mm:ss} [%X{traceId:-no-trace}] %-5level %logger{30} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId:-no-trace}] %-5level %logger{36} - %msg%n"
 
 # ===== APP CONFIG =====
 app:
   base-url: ${APP_BASE_URL:http://localhost:5173}
   mail:
     from-name: ${MAIL_FROM_NAME:Tapo Store}
+
+# ===== RABBITMQ (disabled by default — only active on self-host profile) =====
+# Prevent Spring Boot from trying to connect to RabbitMQ when not self-hosting.
+# RabbitMqConfig uses @Profile("self-host") for the beans; this excludes the autoconfigure.
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration

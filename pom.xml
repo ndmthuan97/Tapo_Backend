@@ -31,6 +31,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
+		<!-- ===== MESSAGING (RabbitMQ — active on self-host profile only) ===== -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
@@ -119,6 +124,18 @@
 			<version>${mapstruct.version}</version>
 		</dependency>
 
+		<!-- ===== RATE LIMITING (Bucket4j + Redis) ===== -->
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j-core</artifactId>
+			<version>8.10.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j-redis</artifactId>
+			<version>8.10.1</version>
+		</dependency>
+
 		<!-- ===== DEV TOOLS ===== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -138,6 +155,13 @@
 			<groupId>vn.payos</groupId>
 			<artifactId>payos-java</artifactId>
 			<version>1.0.2</version>
+		</dependency>
+
+		<!-- ===== EXCEL EXPORT (Apache POI) ===== -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.3.0</version>
 		</dependency>
 
 		<dependency>

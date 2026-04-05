@@ -16,11 +16,15 @@ import backend.repository.ReviewRepository;
 import backend.repository.UserRepository;
 import backend.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -78,10 +82,17 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean canReview(UUID userId, UUID productId) {
-        boolean hasPurchased = reviewRepo.hasUserPurchasedProduct(userId, productId);
+    public Map<String, Object> canReview(UUID userId, UUID productId) {
+        boolean hasPurchased   = reviewRepo.hasUserPurchasedProduct(userId, productId);
         boolean alreadyReviewed = reviewRepo.existsByUserIdAndProductId(userId, productId);
-        return hasPurchased && !alreadyReviewed;
+        boolean can = hasPurchased && !alreadyReviewed;
+        UUID orderId = can
+                ? orderRepo.findDeliveredOrderIdByUserAndProduct(userId, productId).orElse(null)
+                : null;
+        return Map.of(
+                "canReview", can,
+                "orderId",   orderId != null ? orderId.toString() : ""
+        );
     }
 
     @Override
@@ -128,25 +139,47 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
+    // java-pro: allEntries=true -- we don't know productId before loading the review,
+    // and admin-triggered approvals are low-frequency, so full eviction is acceptable
+    @CacheEvict(value = "product-detail", allEntries = true)
     public AdminReviewDto approveReview(UUID reviewId) {
         Review review = reviewRepo.findByIdForAdmin(reviewId)
                 .orElseThrow(() -> new AuthException(CustomCode.REVIEW_NOT_FOUND));
         review.setStatus(ReviewStatus.APPROVED);
-        return toAdminDto(reviewRepo.save(review));
+        reviewRepo.save(review);
+        recalculateProductStats(review.getProduct().getId());
+        return toAdminDto(reviewRepo.findByIdForAdmin(reviewId).orElseThrow());
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "product-detail", allEntries = true)
     public AdminReviewDto rejectReview(UUID reviewId) {
         Review review = reviewRepo.findByIdForAdmin(reviewId)
                 .orElseThrow(() -> new AuthException(CustomCode.REVIEW_NOT_FOUND));
         review.setStatus(ReviewStatus.REJECTED);
-        return toAdminDto(reviewRepo.save(review));
+        reviewRepo.save(review);
+        recalculateProductStats(review.getProduct().getId());
+        return toAdminDto(reviewRepo.findByIdForAdmin(reviewId).orElseThrow());
     }
 
     @Override
     @Transactional(readOnly = true)
     public long countPendingReviews() {
         return reviewRepo.countByStatus(ReviewStatus.PENDING);
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Recalculate avgRating and reviewCount on Product from all APPROVED reviews.
+     * java-pro: single JPQL UPDATE avoids extra SELECT + dirty-check overhead.
+     */
+    private void recalculateProductStats(UUID productId) {
+        double avg = reviewRepo.calculateAvgRating(productId);
+        int count  = reviewRepo.countApprovedReviews(productId);
+        // Round to 1 decimal (e.g. 4.67 → 4.7) for display consistency
+        double rounded = BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP).doubleValue();
+        reviewRepo.updateProductRatingStats(productId, rounded, count);
     }
 }

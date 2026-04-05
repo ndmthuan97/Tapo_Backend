@@ -20,6 +20,7 @@ public class DashboardStatsDto {
     private long ordersThisMonth;
     private long ordersPrevMonth;
     private double ordersGrowthPct;
+    private BigDecimal avgOrderValue; // AOV = totalRevenue / totalOrders
 
     private long totalUsers;
     private long activeUsers;

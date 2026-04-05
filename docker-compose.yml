@@ -1,0 +1,102 @@
+# Tapo — Docker Compose (Backend Only)
+# Frontend deploy trên Vercel — không cần container.
+#
+# Usage (chạy từ thư mục Tapo_Backend/):
+#   Chạy cơ bản (backend + redis):
+#     docker compose up -d
+#
+#   Chạy kèm RabbitMQ:
+#     docker compose --profile rabbit up -d
+#
+#   Build lại image:
+#     docker compose build --no-cache backend
+
+services:
+
+  # ── Backend (Spring Boot) ──────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tapo-backend
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: "8080"
+      SPRING_PROFILES_ACTIVE: "${SPRING_PROFILES_ACTIVE:-default}"
+      # Redis — trỏ vào container redis bên dưới
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped
+    networks:
+      - tapo-net
+
+  # ── Redis (Cache + Refresh Token Store) ───────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: tapo-redis
+    command: >
+      redis-server
+      --requirepass "${REDIS_PASSWORD:-}"
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tapo-net
+
+  # ── RabbitMQ (chỉ bật khi cần — profile rabbit) ───────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: tapo-rabbitmq
+    profiles:
+      - rabbit
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-tapo}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:-tapo-secret}"
+      RABBITMQ_DEFAULT_VHOST: "tapo"
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI → http://localhost:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tapo-net
+
+# ── Volumes ────────────────────────────────────────────────────────────────
+volumes:
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+# ── Networks ───────────────────────────────────────────────────────────────
+networks:
+  tapo-net:
+    driver: bridge

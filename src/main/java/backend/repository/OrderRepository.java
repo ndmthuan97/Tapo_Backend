@@ -56,4 +56,19 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Optional<Order> findByIdWithDetail(UUID id);
 
     boolean existsByOrderCode(String orderCode);
+
+    /**
+     * Find the first DELIVERED order containing a given product for a user.
+     * Used by ReviewController to populate orderId on the review form.
+     */
+    @Query("""
+        SELECT o.id FROM Order o
+        JOIN o.items oi
+        WHERE o.user.id = :userId
+          AND oi.product.id = :productId
+          AND o.status = backend.model.enums.OrderStatus.DELIVERED
+        ORDER BY o.createdAt DESC
+        LIMIT 1
+    """)
+    Optional<UUID> findDeliveredOrderIdByUserAndProduct(UUID userId, UUID productId);
 }

@@ -44,12 +44,11 @@ public class ReviewController {
 
     /** GET /api/reviews/can-review?productId=xxx */
     @GetMapping("/api/reviews/can-review")
-    public ResponseEntity<ApiResponse<Map<String, Boolean>>> canReview(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> canReview(
             @AuthenticationPrincipal CustomUserDetails principal,
             @RequestParam UUID productId
     ) {
-        boolean can = reviewService.canReview(principal.getId(), productId);
-        return ResponseEntity.ok(ApiResponse.success(Map.of("canReview", can)));
+        return ResponseEntity.ok(ApiResponse.success(reviewService.canReview(principal.getId(), productId)));
     }
 
     /** POST /api/reviews */

@@ -1,0 +1,22 @@
+# Build artifacts
+target/
+logs/
+tmp/
+
+# Version control & IDE
+.git
+.gitignore
+.vscode
+*.iml
+.idea/
+
+# Docs & CI (không ảnh hưởng build)
+*.md
+*.log
+
+# Secrets — không đưa vào image
+.env
+.env.example
+
+# Agent / AI tooling
+.agent/

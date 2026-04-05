@@ -7,6 +7,7 @@ import backend.model.enums.ProductStatus;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface ProductService {
@@ -23,6 +24,12 @@ public interface ProductService {
     ProductDto updateProduct(UUID id, ProductRequest request);
 
     void deleteProduct(UUID id);
+
+    /** Delete multiple products. Silently ignores IDs that do not exist. */
+    void bulkDelete(Set<UUID> ids);
+
+    /** Update status for multiple products in one transaction. */
+    void bulkUpdateStatus(Set<UUID> ids, ProductStatus status);
 
     List<SimpleRefDto> getAllCategories();
 

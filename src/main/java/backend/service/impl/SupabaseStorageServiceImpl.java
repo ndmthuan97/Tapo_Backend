@@ -31,6 +31,18 @@ public class SupabaseStorageServiceImpl implements FileStorageService {
             throw new FileUploadException("Cannot upload empty file");
         }
 
+        // ── Validation (java-pro: fail-fast) ─────────────────────────────────
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new FileUploadException("Chỉ chấp nhận file ảnh (JPEG, PNG, WebP, GIF). Loại file nhận được: " + contentType);
+        }
+        final long MAX_SIZE_BYTES = 5L * 1024 * 1024; // 5 MB
+        if (file.getSize() > MAX_SIZE_BYTES) {
+            throw new FileUploadException(
+                String.format("Kích thước file vượt quá giới hạn 5MB. File hiện tại: %.2f MB",
+                    file.getSize() / (1024.0 * 1024.0)));
+        }
+
         try {
             String originalFilename = file.getOriginalFilename();
             String extension = originalFilename != null && originalFilename.contains(".") 

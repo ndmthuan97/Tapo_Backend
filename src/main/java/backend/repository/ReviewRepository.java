@@ -5,6 +5,7 @@ import backend.model.enums.ReviewStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -59,4 +60,39 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     /** Count by status — for dashboard badge */
     long countByStatus(ReviewStatus status);
+
+    // ── Aggregates — recalculate Product stats after approve/reject ────────────
+
+    /** Average rating of all APPROVED reviews for a product. */
+    @Query("""
+        SELECT COALESCE(AVG(CAST(r.rating AS double)), 0.0)
+        FROM Review r
+        WHERE r.product.id = :productId AND r.status = 'APPROVED'
+    """)
+    double calculateAvgRating(@Param("productId") UUID productId);
+
+    /** Count APPROVED reviews for a product. */
+    @Query("""
+        SELECT COUNT(r)
+        FROM Review r
+        WHERE r.product.id = :productId AND r.status = 'APPROVED'
+    """)
+    int countApprovedReviews(@Param("productId") UUID productId);
+
+    /**
+     * Bulk-update Product rating stats in one JPQL UPDATE — java-pro: avoid N+1 writes.
+     * Must be in @Transactional method to take effect.
+     */
+    @Modifying
+    @Query("""
+        UPDATE Product p
+        SET p.avgRating = :avgRating,
+            p.reviewCount = :reviewCount
+        WHERE p.id = :productId
+    """)
+    void updateProductRatingStats(
+            @Param("productId") UUID productId,
+            @Param("avgRating") double avgRating,
+            @Param("reviewCount") int reviewCount
+    );
 }
