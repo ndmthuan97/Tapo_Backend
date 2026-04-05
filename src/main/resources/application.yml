@@ -1,6 +1,9 @@
 spring:
   application:
     name: tapo-backend
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
 
   # ===== SMTP (JavaMailSender) =====
   mail:
@@ -149,7 +152,4 @@ app:
 # ===== RABBITMQ (disabled by default — only active on self-host profile) =====
 # Prevent Spring Boot from trying to connect to RabbitMQ when not self-hosting.
 # RabbitMqConfig uses @Profile("self-host") for the beans; this excludes the autoconfigure.
-spring:
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+
