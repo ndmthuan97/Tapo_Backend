@@ -96,6 +96,7 @@ spring:
 # ===== SERVER =====
 server:
   port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
   servlet:
     context-path: /
 
@@ -128,6 +129,9 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: method
     disable-validator-url: true
+  servers:
+    - url: ${APP_BASE_URL:http://localhost:8080}
+      description: Active server
 
 # ===== LOGGING =====
 logging:
