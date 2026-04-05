@@ -9,7 +9,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.annotation.Nonnull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -40,11 +39,14 @@ import java.util.function.Supplier;
 @Slf4j
 @Component
 @Order(2)
-@RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final ProxyManager<String> bucketProxyManager;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public RateLimitingFilter(ProxyManager<String> bucketProxyManager) {
+        this.bucketProxyManager = bucketProxyManager;
+    }
 
     // ── Rate limit configs (các rule cố định — java-pro: static map O(1) lookup) ──────────────
 

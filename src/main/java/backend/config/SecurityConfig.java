@@ -75,7 +75,6 @@ public class SecurityConfig {
             );
 
         http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(rateLimitFilter(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         // OAuth2 login — Google redirect flow
@@ -114,10 +113,5 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public backend.security.RateLimitFilter rateLimitFilter() {
-        return new backend.security.RateLimitFilter();
     }
 }

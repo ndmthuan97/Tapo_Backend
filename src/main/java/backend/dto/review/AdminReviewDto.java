@@ -1,7 +1,6 @@
 package backend.dto.review;
 
 import backend.model.enums.ReviewStatus;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.Instant;
 import java.util.List;

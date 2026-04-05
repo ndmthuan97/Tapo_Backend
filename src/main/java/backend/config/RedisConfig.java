@@ -7,6 +7,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import io.github.bucket4j.redis.lettuce.cas.LettuceBasedProxyManager;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -123,18 +127,20 @@ public class RedisConfig {
 
     /**
      * Bucket4j Lettuce-based ProxyManager for distributed rate limiting.
-     * Reuses Upstash Redis -- no extra infra needed.
-     * java-pro: build RedisClient from same URL used by Spring Data Redis.
+     * Reuses Upstash Redis — no extra infra needed.
+     *
+     * <p>Key fix: use mixed codec {@code RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE)}
+     * so bucket keys are serialized as String (UTF-8) while values stay as byte[].
+     * The previous unsafe cast {@code (ProxyManager<String>)(ProxyManager<?>)} caused
+     * {@code ClassCastException: String cannot be cast to [B} at runtime.
      */
     @Bean
-    @SuppressWarnings("unchecked")
     public ProxyManager<String> bucketProxyManager() {
-        // Lettuce CAS-based ProxyManager -- build dedicated client from same Upstash URL
-        // Bucket4j 8.x internally uses byte[] keys; safe cast via builder pattern
         RedisClient redisClient = RedisClient.create(redisUrl);
-        var rawProxy = LettuceBasedProxyManager.builderFor(redisClient).build();
-        // java-pro: SuppressWarnings justified -- Bucket4j redis key serialization is opaque
-        return (ProxyManager<String>) (ProxyManager<?>) rawProxy;
+        // Mixed codec: String keys + byte[] values — no cast needed, type-safe
+        StatefulRedisConnection<String, byte[]> connection =
+                redisClient.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
+        return LettuceBasedProxyManager.builderFor(connection).build();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────────

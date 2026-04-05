@@ -3,7 +3,6 @@ package backend.exception;
 import backend.dto.common.ApiResponse;
 import backend.dto.common.CustomCode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -47,7 +46,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex) {
         log.warn("[RUNTIME EXCEPTION] {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        return ResponseEntity.status(422)
                 .body(ApiResponse.error(CustomCode.INTERNAL_SERVER_ERROR.getCode(), ex.getMessage()));
     }
 

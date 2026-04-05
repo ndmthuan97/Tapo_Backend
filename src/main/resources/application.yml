@@ -1,6 +1,8 @@
 spring:
   application:
     name: tapo-backend
+  config:
+    import: optional:file:.env[.properties]
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration

@@ -35,7 +35,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PayOS payOS;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // SecureRandom thread-safe, singleton để tránh re-seeding overhead
     private static final SecureRandom RANDOM = new SecureRandom();
