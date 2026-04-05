@@ -120,12 +120,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
 
-        var body = Map.of(
-            "statusCode", 429,
-            "message",    "Quá nhiều yêu cầu. Vui lòng thử lại sau " + retryAfterSeconds + " giây.",
-            "data",       (Object) null,
-            "errors",     (Object) null
-        );
+        var body = new java.util.LinkedHashMap<String, Object>();
+        body.put("statusCode", 429);
+        body.put("message",    "Quá nhiều yêu cầu. Vui lòng thử lại sau " + retryAfterSeconds + " giây.");
+        body.put("data",       null);
+        body.put("errors",     null);
         objectMapper.writeValue(response.getWriter(), body);
     }
 }
