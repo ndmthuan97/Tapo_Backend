@@ -69,7 +69,9 @@ public class StatisticsServiceImpl {
 
         // ── Order status ─────────────────────────────────────────────────────────
         Map<String, Long> statusMap = statsRepo.countByStatus().stream()
-                .collect(Collectors.toMap(r -> r[0].toString(), r -> (Long) r[1]));
+                .collect(Collectors.toMap(
+                        r -> r[0].toString(),
+                        r -> ((Number) r[1]).longValue()));
 
         long totalOrders      = statusMap.values().stream().mapToLong(Long::longValue).sum();
         long pendingOrders    = statusMap.getOrDefault("PENDING",    0L);
@@ -85,9 +87,9 @@ public class StatisticsServiceImpl {
 
         // ── Users ────────────────────────────────────────────────────────────────
         Object[] userStats = statsRepo.getUserStats();
-        long totalUsers       = ((Number) userStats[0]).longValue();
-        long activeUsers      = ((Number) userStats[1]).longValue();
-        long lockedUsers      = ((Number) userStats[2]).longValue();
+        long totalUsers        = (userStats != null && userStats.length > 0) ? ((Number) userStats[0]).longValue() : 0L;
+        long activeUsers       = (userStats != null && userStats.length > 1) ? ((Number) userStats[1]).longValue() : 0L;
+        long lockedUsers       = (userStats != null && userStats.length > 2) ? ((Number) userStats[2]).longValue() : 0L;
         long newUsersThisMonth = statsRepo.countNewUsers(thisMonthStart, thisMonthEnd);
 
         // ── Monthly chart ────────────────────────────────────────────────────────
