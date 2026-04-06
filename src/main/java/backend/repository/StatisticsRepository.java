@@ -108,6 +108,10 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
             """, nativeQuery = true)
     long countReturningUsers();
 
+    /** Tổng số yêu cầu đổi/trả (tất cả status) */
+    @Query(value = "SELECT COUNT(*) FROM return_requests", nativeQuery = true)
+    long countReturnOrders();
+
     // ── Products ─────────────────────────────────────────────────────────────
 
     /** Top N sản phẩm bán chạy nhất */

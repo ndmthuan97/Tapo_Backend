@@ -82,6 +82,7 @@ public class StatisticsServiceImpl {
                                 statusMap.getOrDefault("SHIPPED",    0L);
         long deliveredOrders  = statusMap.getOrDefault("DELIVERED",  0L);
         long cancelledOrders  = statusMap.getOrDefault("CANCELLED",  0L);
+        long returnOrders     = statsRepo.countReturnOrders();
 
         // ── AOV (Average Order Value) ─────────────────────────────────────────
         BigDecimal avgOrderValue = totalOrders > 0
@@ -155,6 +156,7 @@ public class StatisticsServiceImpl {
                 .processingOrders(processingOrders)
                 .deliveredOrders(deliveredOrders)
                 .cancelledOrders(cancelledOrders)
+                .returnOrders(returnOrders)
                 .monthlyRevenue(monthlyRevenue)
                 .quarterlyRevenue(quarterlyRevenue)
                 .topProducts(topProducts)

@@ -33,6 +33,7 @@ public class DashboardStatsDto {
     private long processingOrders;
     private long deliveredOrders;
     private long cancelledOrders;
+    private long returnOrders;
 
     // ── Chart data ────────────────────────────────────────────────────────────
     private List<RevenueDataPoint> monthlyRevenue;
