@@ -36,4 +36,22 @@ public interface BlogPostRepository extends JpaRepository<BlogPost, UUID> {
     @Modifying
     @Query("UPDATE BlogPost p SET p.viewCount = p.viewCount + 1 WHERE p.id = :id")
     void incrementViewCount(UUID id);
+
+    /** Admin: tất cả bài viết, sắp xếp theo ngày tạo mới nhất */
+    @Query("""
+        SELECT p FROM BlogPost p
+        JOIN FETCH p.category
+        JOIN FETCH p.author
+        ORDER BY p.createdAt DESC
+    """)
+    Page<BlogPost> findAllForAdmin(Pageable pageable);
+
+    /** Lấy bài viết theo ID kèm eager load category + author */
+    @Query("""
+        SELECT p FROM BlogPost p
+        JOIN FETCH p.category
+        JOIN FETCH p.author
+        WHERE p.id = :id
+    """)
+    Optional<BlogPost> findByIdWithJoins(UUID id);
 }

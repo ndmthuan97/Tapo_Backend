@@ -26,30 +26,30 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
     BigDecimal getTotalRevenue(@Param("from") LocalDateTime from,
                                @Param("to")   LocalDateTime to);
 
-    /** Doanh thu theo tháng trong năm */
-    @Query("""
-        SELECT FUNCTION('MONTH', o.createdAt) as month,
-               COALESCE(SUM(o.totalAmount), 0) as revenue,
-               COUNT(o.id) as orderCount
-        FROM Order o
+    /** Doanh thu theo tháng trong năm — native SQL để dùng EXTRACT() của PostgreSQL */
+    @Query(value = """
+        SELECT EXTRACT(MONTH FROM o.created_at)::int   AS month,
+               COALESCE(SUM(o.total_amount), 0)         AS revenue,
+               COUNT(o.id)                              AS order_count
+        FROM orders o
         WHERE o.status = 'DELIVERED'
-          AND FUNCTION('YEAR', o.createdAt) = :year
-        GROUP BY FUNCTION('MONTH', o.createdAt)
-        ORDER BY FUNCTION('MONTH', o.createdAt)
-        """)
+          AND EXTRACT(YEAR FROM o.created_at) = :year
+        GROUP BY EXTRACT(MONTH FROM o.created_at)
+        ORDER BY EXTRACT(MONTH FROM o.created_at)
+        """, nativeQuery = true)
     List<Object[]> getMonthlyRevenue(@Param("year") int year);
 
-    /** Doanh thu theo quý trong năm */
-    @Query("""
-        SELECT FUNCTION('QUARTER', o.createdAt) as quarter,
-               COALESCE(SUM(o.totalAmount), 0) as revenue,
-               COUNT(o.id) as orderCount
-        FROM Order o
+    /** Doanh thu theo quý trong năm — native SQL để dùng EXTRACT() của PostgreSQL */
+    @Query(value = """
+        SELECT EXTRACT(QUARTER FROM o.created_at)::int  AS quarter,
+               COALESCE(SUM(o.total_amount), 0)          AS revenue,
+               COUNT(o.id)                               AS order_count
+        FROM orders o
         WHERE o.status = 'DELIVERED'
-          AND FUNCTION('YEAR', o.createdAt) = :year
-        GROUP BY FUNCTION('QUARTER', o.createdAt)
-        ORDER BY FUNCTION('QUARTER', o.createdAt)
-        """)
+          AND EXTRACT(YEAR FROM o.created_at) = :year
+        GROUP BY EXTRACT(QUARTER FROM o.created_at)
+        ORDER BY EXTRACT(QUARTER FROM o.created_at)
+        """, nativeQuery = true)
     List<Object[]> getQuarterlyRevenue(@Param("year") int year);
 
     // ── Orders ───────────────────────────────────────────────────────────────
@@ -76,16 +76,20 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
 
     // ── Products ─────────────────────────────────────────────────────────────
 
-    /** Top N sản phẩm bán chạy nhất */
-    @Query("""
-        SELECT oi.product.id, oi.product.name, oi.product.thumbnailUrl,
-               SUM(oi.quantity) as totalSold,
-               SUM(oi.totalPrice) as totalRevenue
-        FROM OrderItem oi
-        WHERE oi.order.status = 'DELIVERED'
-        GROUP BY oi.product.id, oi.product.name, oi.product.thumbnailUrl
-        ORDER BY totalSold DESC
+    /** Top N sản phẩm bán chạy nhất — native SQL để tránh LIMIT trong JPQL */
+    @Query(value = """
+        SELECT oi.product_id::text,
+               p.name,
+               p.thumbnail_url,
+               SUM(oi.quantity)    AS total_sold,
+               SUM(oi.total_price) AS total_revenue
+        FROM order_items oi
+        JOIN products p ON p.id = oi.product_id
+        JOIN orders   o ON o.id = oi.order_id
+        WHERE o.status = 'DELIVERED'
+        GROUP BY oi.product_id, p.name, p.thumbnail_url
+        ORDER BY total_sold DESC
         LIMIT :limit
-        """)
+        """, nativeQuery = true)
     List<Object[]> getTopProducts(@Param("limit") int limit);
 }
