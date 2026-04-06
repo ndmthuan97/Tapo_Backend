@@ -23,6 +23,6 @@ public class Brand extends BaseEntity {
     private String logoUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) not null default 'ACTIVE'")
     private CatalogStatus status = CatalogStatus.ACTIVE;
 }

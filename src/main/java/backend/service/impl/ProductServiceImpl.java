@@ -160,7 +160,7 @@ public class ProductServiceImpl implements ProductService {
     // java-pro: metadata (categories/brands) changes infrequently -- 30min TTL in RedisConfig
     @Cacheable(value = "metadata", key = "'categories'")
     public List<SimpleRefDto> getAllCategories() {
-        return categoryRepository.findAllByIsVisibleTrueOrderBySortOrderAsc()
+        return categoryRepository.findAllByStatusOrderBySortOrderAsc(backend.model.enums.CatalogStatus.ACTIVE)
                 .stream()
                 .map(c -> new SimpleRefDto(c.getId(), c.getName()))
                 .toList();
@@ -170,7 +170,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     @Cacheable(value = "metadata", key = "'brands'")
     public List<SimpleRefDto> getAllBrands() {
-        return brandRepository.findAllByIsVisibleTrueOrderByNameAsc()
+        return brandRepository.findAllByStatusOrderByNameAsc(backend.model.enums.CatalogStatus.ACTIVE)
                 .stream()
                 .map(b -> new SimpleRefDto(b.getId(), b.getName()))
                 .toList();
