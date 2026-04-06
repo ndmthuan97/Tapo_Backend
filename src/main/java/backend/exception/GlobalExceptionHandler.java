@@ -40,14 +40,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Xử lý RuntimeException có message rõ ràng (vd: PayOS, 3rd party services).
-     * Trả 422 Unprocessable Entity thay vì 500 để FE phân biệt được.
+     * Xử lý RuntimeException KHÔNG xác định (vd: NullPointerException, Redis lỗi, DB timeout).
+     * Trả 500 và log đầy đủ stack trace để debug — KHÔNG được nuốt lỗi thành 422 ẩn danh.
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex) {
-        log.warn("[RUNTIME EXCEPTION] {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
-        return ResponseEntity.status(422)
-                .body(ApiResponse.error(CustomCode.INTERNAL_SERVER_ERROR.getCode(), ex.getMessage()));
+        log.error("[RUNTIME EXCEPTION] {}: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+        return ResponseEntity.status(CustomCode.INTERNAL_SERVER_ERROR.getHttpStatus())
+                .body(ApiResponse.error(CustomCode.INTERNAL_SERVER_ERROR.getCode(),
+                        "An unexpected error occurred: " + ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

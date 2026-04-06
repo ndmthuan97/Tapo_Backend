@@ -89,7 +89,8 @@ public class StatisticsServiceImpl {
                 : BigDecimal.ZERO;
 
         // ── Users ────────────────────────────────────────────────────────────────
-        Object[] userStats = statsRepo.getUserStats();
+        List<Object[]> userStatsList = statsRepo.getUserStats();
+        Object[] userStats = (userStatsList != null && !userStatsList.isEmpty()) ? userStatsList.get(0) : null;
         long totalUsers        = (userStats != null && userStats.length > 0) ? ((Number) userStats[0]).longValue() : 0L;
         long activeUsers       = (userStats != null && userStats.length > 1) ? ((Number) userStats[1]).longValue() : 0L;
         long lockedUsers       = (userStats != null && userStats.length > 2) ? ((Number) userStats[2]).longValue() : 0L;

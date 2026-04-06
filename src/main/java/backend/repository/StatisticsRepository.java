@@ -86,7 +86,7 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
                    COALESCE(SUM(CASE WHEN status = 'LOCKED' THEN 1 ELSE 0 END), 0)
             FROM users
             """, nativeQuery = true)
-    Object[] getUserStats();
+    List<Object[]> getUserStats();
 
     /** Users đăng ký mới trong khoảng thời gian */
     @Query(value = """
