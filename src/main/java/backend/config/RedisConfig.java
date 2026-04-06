@@ -11,9 +11,13 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -45,9 +49,10 @@ import java.util.Map;
  *   <li>topProducts → 10 min (aggregate)</li>
  * </ul>
  */
+@Slf4j
 @Configuration
 @EnableCaching
-public class RedisConfig {
+public class RedisConfig implements CachingConfigurer {
 
     @Value("${spring.data.redis.url}")
     private String redisUrl;
@@ -121,6 +126,33 @@ public class RedisConfig {
                         "metadata",       base.entryTtl(Duration.ofMinutes(30))
                 ))
                 .build();
+    }
+
+    /**
+     * Silent cache error handler — if Redis is unreachable (e.g. Upstash timeout on Azure),
+     * log the warning and fall through to the actual method instead of propagating a
+     * RuntimeException that would be swallowed as HTTP 422 by GlobalExceptionHandler.
+     */
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new CacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(RuntimeException e, Cache cache, Object key) {
+                log.warn("[CACHE] GET failed [{}::{}]: {}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCachePutError(RuntimeException e, Cache cache, Object key, Object value) {
+                log.warn("[CACHE] PUT failed [{}::{}]: {}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCacheEvictError(RuntimeException e, Cache cache, Object key) {
+                log.warn("[CACHE] EVICT failed [{}::{}]: {}", cache.getName(), key, e.getMessage());
+            }
+            @Override
+            public void handleCacheClearError(RuntimeException e, Cache cache) {
+                log.warn("[CACHE] CLEAR failed [{}]: {}", cache.getName(), e.getMessage());
+            }
+        };
     }
 
     // ── Bucket4j ProxyManager (Rate Limiting) ─────────────────────────────────────
