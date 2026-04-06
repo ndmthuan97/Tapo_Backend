@@ -133,6 +133,20 @@ springdoc:
     - url: ${APP_BASE_URL:http://localhost:8080}
       description: Active server
 
+# ===== ACTUATOR (Azure keep-alive + health check) =====
+# UptimeRobot sẽ ping: https://<your-app>.azurewebsites.net/actuator/health
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never   # Không lộ DB/Redis info ra ngoài
+  server:
+    port: ${SERVER_PORT:8080}  # Cùng port với app — không cần port riêng
+
 # ===== LOGGING =====
 logging:
   level:

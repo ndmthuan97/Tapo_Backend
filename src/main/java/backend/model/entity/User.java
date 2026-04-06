@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +48,10 @@ public class User extends BaseEntity {
 
     @Column(name = "provider_id", length = 255)
     private String providerId;
+
+    /** Thời điểm đăng nhập thành công gần nhất (JWT + OAuth2). */
+    @Column(name = "last_login_at")
+    private Instant lastLoginAt;
 
     // ===== Relationships =====
 

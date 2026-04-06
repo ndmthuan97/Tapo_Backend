@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 /**
  * Handles successful Google OAuth2 login.
@@ -40,6 +41,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private String appBaseUrl;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void onAuthenticationSuccess(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -64,6 +66,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             response.sendRedirect(appBaseUrl + "/login?error=oauth_user_not_found");
             return;
         }
+
+        // Track last login time for analytics
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
 
         // Generate JWT pair
         String accessToken  = tokenProvider.generateAccessToken(user.getEmail());

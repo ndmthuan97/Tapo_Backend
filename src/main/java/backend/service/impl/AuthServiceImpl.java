@@ -26,6 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -82,7 +84,7 @@ public class AuthServiceImpl implements AuthService {
     // ── Login ─────────────────────────────────────────────────────────────────
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         try {
             authenticationManager.authenticate(
@@ -99,6 +101,10 @@ public class AuthServiceImpl implements AuthService {
             if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
                 throw new AuthException(CustomCode.EMAIL_NOT_VERIFIED);
             }
+
+            // Track last login time for analytics
+            user.setLastLoginAt(Instant.now());
+            userRepository.save(user);
 
             return generateAuthResponse(user);
         } catch (AuthenticationException ex) {

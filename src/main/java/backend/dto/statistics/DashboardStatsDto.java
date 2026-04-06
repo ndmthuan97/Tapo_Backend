@@ -27,6 +27,7 @@ public class DashboardStatsDto {
     private long lockedUsers;
     private long newUsersThisMonth;
     private long returningUsers;
+    private long returningUsersThisWeek;
 
     // ── Order status breakdown ────────────────────────────────────────────────
     private long pendingOrders;
@@ -38,6 +39,12 @@ public class DashboardStatsDto {
     // ── Chart data ────────────────────────────────────────────────────────────
     private List<RevenueDataPoint> monthlyRevenue;
     private List<RevenueDataPoint> quarterlyRevenue;
+
+    // ── Product inventory ─────────────────────────────────────────────────────
+    private long totalProducts;
+    private long activeProducts;
+    private long inactiveProducts;
+    private long draftProducts;
 
     // ── Top products ──────────────────────────────────────────────────────────
     private List<TopProductDto> topProducts;

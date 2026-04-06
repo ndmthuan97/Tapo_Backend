@@ -8,8 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -53,6 +56,12 @@ public class StatisticsServiceImpl {
         Instant prevMonthStart   = thisMonthDate.minusMonths(1).atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant prevMonthEnd     = thisMonthStart.minusSeconds(1);
 
+        // Week window: Mon 00:00 UTC → Sun 23:59:59 UTC
+        LocalDate today         = LocalDate.now(ZoneOffset.UTC);
+        LocalDate weekMonday    = today.with(DayOfWeek.MONDAY);
+        Instant   thisWeekStart = weekMonday.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant   thisWeekEnd   = weekMonday.plusWeeks(1).atStartOfDay(ZoneOffset.UTC).toInstant().minusSeconds(1);
+
         // ── Revenue ─────────────────────────────────────────────────────────────
         BigDecimal revenueThisMonth = nvl(statsRepo.getTotalRevenue(thisMonthStart, thisMonthEnd));
         BigDecimal revenuePrevMonth = nvl(statsRepo.getTotalRevenue(prevMonthStart, prevMonthEnd));
@@ -78,10 +87,12 @@ public class StatisticsServiceImpl {
 
         long totalOrders      = statusMap.values().stream().mapToLong(Long::longValue).sum();
         long pendingOrders    = statusMap.getOrDefault("PENDING",    0L);
-        long processingOrders = statusMap.getOrDefault("PROCESSING", 0L) +
-                                statusMap.getOrDefault("SHIPPED",    0L);
+        long processingOrders = statusMap.getOrDefault("CONFIRMED",  0L)
+                              + statusMap.getOrDefault("PROCESSING", 0L)
+                              + statusMap.getOrDefault("SHIPPING",   0L);
         long deliveredOrders  = statusMap.getOrDefault("DELIVERED",  0L);
-        long cancelledOrders  = statusMap.getOrDefault("CANCELLED",  0L);
+        long cancelledOrders  = statusMap.getOrDefault("CANCELLED",  0L)
+                              + statusMap.getOrDefault("RETURNED",   0L);
         long returnOrders     = statsRepo.countReturnOrders();
 
         // ── AOV (Average Order Value) ─────────────────────────────────────────
@@ -95,8 +106,9 @@ public class StatisticsServiceImpl {
         long totalUsers        = (userStats != null && userStats.length > 0) ? ((Number) userStats[0]).longValue() : 0L;
         long activeUsers       = (userStats != null && userStats.length > 1) ? ((Number) userStats[1]).longValue() : 0L;
         long lockedUsers       = (userStats != null && userStats.length > 2) ? ((Number) userStats[2]).longValue() : 0L;
-        long newUsersThisMonth  = statsRepo.countNewUsers(thisMonthStart, thisMonthEnd);
-        long returningUsers     = statsRepo.countReturningUsers();
+        long newUsersThisMonth      = statsRepo.countNewUsers(thisMonthStart, thisMonthEnd);
+        long returningUsers         = statsRepo.countReturningUsers();
+        long returningUsersThisWeek = statsRepo.countReturningUsersThisWeek(thisWeekStart, thisWeekEnd);
 
         // ── Monthly chart ────────────────────────────────────────────────────────
         Map<Integer, Object[]> monthlyMap = statsRepo.getMonthlyRevenue(year).stream()
@@ -137,6 +149,14 @@ public class StatisticsServiceImpl {
                         .build())
                 .collect(Collectors.toList());
 
+        // ── Product inventory stats ─────────────────────────────────────────────
+        List<Object[]> productStatsList = statsRepo.getProductStats();
+        Object[] ps = (productStatsList != null && !productStatsList.isEmpty()) ? productStatsList.get(0) : null;
+        long totalProducts    = (ps != null && ps.length > 0) ? ((Number) ps[0]).longValue() : 0L;
+        long activeProducts   = (ps != null && ps.length > 1) ? ((Number) ps[1]).longValue() : 0L;
+        long inactiveProducts = (ps != null && ps.length > 2) ? ((Number) ps[2]).longValue() : 0L;
+        long draftProducts    = (ps != null && ps.length > 3) ? ((Number) ps[3]).longValue() : 0L;
+
         return DashboardStatsDto.builder()
                 .totalRevenue(totalRevenue)
                 .revenueThisMonth(revenueThisMonth)
@@ -152,11 +172,16 @@ public class StatisticsServiceImpl {
                 .lockedUsers(lockedUsers)
                 .newUsersThisMonth(newUsersThisMonth)
                 .returningUsers(returningUsers)
+                .returningUsersThisWeek(returningUsersThisWeek)
                 .pendingOrders(pendingOrders)
                 .processingOrders(processingOrders)
                 .deliveredOrders(deliveredOrders)
                 .cancelledOrders(cancelledOrders)
                 .returnOrders(returnOrders)
+                .totalProducts(totalProducts)
+                .activeProducts(activeProducts)
+                .inactiveProducts(inactiveProducts)
+                .draftProducts(draftProducts)
                 .monthlyRevenue(monthlyRevenue)
                 .quarterlyRevenue(quarterlyRevenue)
                 .topProducts(topProducts)
@@ -314,5 +339,15 @@ public class StatisticsServiceImpl {
     @Scheduled(cron = "0 5 0 * * *")
     public void evictDashboardCacheDaily() {
         // Spring AOP handles the eviction — no body needed
+    }
+
+    /**
+     * Evict cache immediately on startup — ensures stale Redis data
+     * is cleared after any backend code or query changes.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @CacheEvict(value = "dashboard", allEntries = true)
+    public void evictOnStartup() {
+        // Runs once after context is fully initialized
     }
 }

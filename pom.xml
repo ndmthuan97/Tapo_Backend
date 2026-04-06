@@ -143,6 +143,11 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
+		<!-- ===== ACTUATOR (health check for Azure keep-alive) ===== -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 
 		<!-- ===== TESTING ===== -->
 		<dependency>

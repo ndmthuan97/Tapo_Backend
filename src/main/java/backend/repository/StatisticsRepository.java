@@ -1,9 +1,8 @@
 package backend.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 import backend.model.entity.Order;
 
 import java.math.BigDecimal;
@@ -17,9 +16,11 @@ import java.util.UUID;
  * <p>Rationale: JPQL with Hibernate 6 has edge-case compatibility issues
  * (enum string literals, fully-qualified entity names, FUNCTION() calls).
  * Native SQL is explicit, predictable, and directly testable in psql.
+ * Extends the minimal Repository marker (not JpaRepository) to avoid
+ * ambiguous-bean conflict with OrderRepository for the same entity.
  */
-@Repository
-public interface StatisticsRepository extends JpaRepository<Order, UUID> {
+@org.springframework.stereotype.Repository
+public interface StatisticsRepository extends Repository<Order, UUID> {
 
     // ── Revenue ──────────────────────────────────────────────────────────────
 
@@ -98,15 +99,28 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
     long countNewUsers(@Param("from") Instant from,
                        @Param("to")   Instant to);
 
-    /** Users quay lại — có từ 2 đơn DELIVERED trở lên */
+    /** Users quay lại — có từ 2 đơn hợp lệ (trừ CANCELLED/RETURNED) trở lên */
     @Query(value = """
-            SELECT COUNT(DISTINCT o.user_id)
-            FROM orders o
-            WHERE o.status = 'DELIVERED'
-            GROUP BY o.user_id
-            HAVING COUNT(*) >= 2
+            SELECT COUNT(*) FROM (
+                SELECT o.user_id
+                FROM orders o
+                WHERE o.status NOT IN ('CANCELLED', 'RETURNED')
+                GROUP BY o.user_id
+                HAVING COUNT(*) >= 2
+            ) sub
             """, nativeQuery = true)
     long countReturningUsers();
+
+    /** Users quay lại trong tuần — đăng nhập tuần này VÀ đã đăng ký trước tuần này */
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM users u
+            WHERE u.last_login_at >= :weekStart
+              AND u.last_login_at <  :weekEnd
+              AND u.created_at    <  :weekStart
+            """, nativeQuery = true)
+    long countReturningUsersThisWeek(@Param("weekStart") Instant weekStart,
+                                     @Param("weekEnd")   Instant weekEnd);
 
     /** Tổng số yêu cầu đổi/trả (tất cả status) */
     @Query(value = "SELECT COUNT(*) FROM return_requests", nativeQuery = true)
@@ -114,7 +128,7 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
 
     // ── Products ─────────────────────────────────────────────────────────────
 
-    /** Top N sản phẩm bán chạy nhất */
+    /** Top N sản phẩm bán chạy nhất (trừ CANCELLED và RETURNED) */
     @Query(value = """
             SELECT oi.product_id::text,
                    p.name,
@@ -124,10 +138,20 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
             FROM order_items oi
             JOIN products p ON p.id = oi.product_id
             JOIN orders   o ON o.id = oi.order_id
-            WHERE o.status = 'DELIVERED'
+            WHERE o.status NOT IN ('CANCELLED', 'RETURNED')
             GROUP BY oi.product_id, p.name, p.thumbnail_url
             ORDER BY total_sold DESC
             LIMIT :limit
             """, nativeQuery = true)
     List<Object[]> getTopProducts(@Param("limit") int limit);
+
+    /** Thống kê sản phẩm theo trạng thái: total, active, inactive, draft */
+    @Query(value = """
+            SELECT COUNT(*),
+                   COALESCE(SUM(CASE WHEN status = 'ACTIVE'   THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN status = 'INACTIVE' THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN status = 'DRAFT'    THEN 1 ELSE 0 END), 0)
+            FROM products
+            """, nativeQuery = true)
+    List<Object[]> getProductStats();
 }
