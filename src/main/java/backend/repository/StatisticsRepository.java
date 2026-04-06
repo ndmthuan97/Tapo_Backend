@@ -25,7 +25,7 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
 
     /** Tổng doanh thu các đơn DELIVERED trong khoảng thời gian */
     @Query(value = """
-            SELECT COALESCE(SUM(o.total_amount), 0)
+            SELECT COALESCE(SUM(o.total_amount), 0::numeric)
             FROM orders o
             WHERE o.status = 'DELIVERED'
               AND o.created_at >= :from
@@ -37,8 +37,8 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
     /** Doanh thu theo tháng trong năm — EXTRACT() native PostgreSQL */
     @Query(value = """
             SELECT EXTRACT(MONTH FROM o.created_at)::int   AS month,
-                   COALESCE(SUM(o.total_amount), 0)         AS revenue,
-                   COUNT(o.id)                              AS order_count
+                   COALESCE(SUM(o.total_amount), 0::numeric) AS revenue,
+                   COUNT(o.id)                               AS order_count
             FROM orders o
             WHERE o.status = 'DELIVERED'
               AND EXTRACT(YEAR FROM o.created_at) = :year
@@ -49,9 +49,9 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
 
     /** Doanh thu theo quý trong năm — EXTRACT() native PostgreSQL */
     @Query(value = """
-            SELECT EXTRACT(QUARTER FROM o.created_at)::int  AS quarter,
-                   COALESCE(SUM(o.total_amount), 0)          AS revenue,
-                   COUNT(o.id)                               AS order_count
+            SELECT EXTRACT(QUARTER FROM o.created_at)::int   AS quarter,
+                   COALESCE(SUM(o.total_amount), 0::numeric)  AS revenue,
+                   COUNT(o.id)                                AS order_count
             FROM orders o
             WHERE o.status = 'DELIVERED'
               AND EXTRACT(YEAR FROM o.created_at) = :year
