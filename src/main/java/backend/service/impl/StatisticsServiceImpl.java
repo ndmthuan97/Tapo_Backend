@@ -94,7 +94,8 @@ public class StatisticsServiceImpl {
         long totalUsers        = (userStats != null && userStats.length > 0) ? ((Number) userStats[0]).longValue() : 0L;
         long activeUsers       = (userStats != null && userStats.length > 1) ? ((Number) userStats[1]).longValue() : 0L;
         long lockedUsers       = (userStats != null && userStats.length > 2) ? ((Number) userStats[2]).longValue() : 0L;
-        long newUsersThisMonth = statsRepo.countNewUsers(thisMonthStart, thisMonthEnd);
+        long newUsersThisMonth  = statsRepo.countNewUsers(thisMonthStart, thisMonthEnd);
+        long returningUsers     = statsRepo.countReturningUsers();
 
         // ── Monthly chart ────────────────────────────────────────────────────────
         Map<Integer, Object[]> monthlyMap = statsRepo.getMonthlyRevenue(year).stream()
@@ -149,6 +150,7 @@ public class StatisticsServiceImpl {
                 .activeUsers(activeUsers)
                 .lockedUsers(lockedUsers)
                 .newUsersThisMonth(newUsersThisMonth)
+                .returningUsers(returningUsers)
                 .pendingOrders(pendingOrders)
                 .processingOrders(processingOrders)
                 .deliveredOrders(deliveredOrders)

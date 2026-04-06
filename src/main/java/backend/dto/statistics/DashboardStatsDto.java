@@ -26,6 +26,7 @@ public class DashboardStatsDto {
     private long activeUsers;
     private long lockedUsers;
     private long newUsersThisMonth;
+    private long returningUsers;
 
     // ── Order status breakdown ────────────────────────────────────────────────
     private long pendingOrders;

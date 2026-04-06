@@ -98,6 +98,16 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
     long countNewUsers(@Param("from") Instant from,
                        @Param("to")   Instant to);
 
+    /** Users quay lại — có từ 2 đơn DELIVERED trở lên */
+    @Query(value = """
+            SELECT COUNT(DISTINCT o.user_id)
+            FROM orders o
+            WHERE o.status = 'DELIVERED'
+            GROUP BY o.user_id
+            HAVING COUNT(*) >= 2
+            """, nativeQuery = true)
+    long countReturningUsers();
+
     // ── Products ─────────────────────────────────────────────────────────────
 
     /** Top N sản phẩm bán chạy nhất */
