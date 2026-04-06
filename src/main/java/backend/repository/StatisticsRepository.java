@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import backend.model.entity.Order;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +23,8 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
         WHERE o.status = 'DELIVERED'
           AND o.createdAt BETWEEN :from AND :to
         """)
-    BigDecimal getTotalRevenue(@Param("from") LocalDateTime from,
-                               @Param("to")   LocalDateTime to);
+    BigDecimal getTotalRevenue(@Param("from") Instant from,
+                               @Param("to")   Instant to);
 
     /** Doanh thu theo tháng trong năm — native SQL để dùng EXTRACT() của PostgreSQL */
     @Query(value = """
@@ -56,8 +56,8 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
 
     /** Tổng số đơn trong khoảng thời gian */
     @Query("SELECT COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :from AND :to")
-    long countOrders(@Param("from") LocalDateTime from,
-                     @Param("to")   LocalDateTime to);
+    long countOrders(@Param("from") Instant from,
+                     @Param("to")   Instant to);
 
     /** Số đơn hàng theo trạng thái */
     @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
@@ -71,8 +71,8 @@ public interface StatisticsRepository extends JpaRepository<Order, UUID> {
 
     /** Users đăng ký mới trong khoảng thời gian */
     @Query("SELECT COUNT(u) FROM backend.model.entity.User u WHERE u.createdAt BETWEEN :from AND :to")
-    long countNewUsers(@Param("from") LocalDateTime from,
-                       @Param("to")   LocalDateTime to);
+    long countNewUsers(@Param("from") Instant from,
+                       @Param("to")   Instant to);
 
     // ── Products ─────────────────────────────────────────────────────────────
 

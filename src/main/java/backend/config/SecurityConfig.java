@@ -65,6 +65,9 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/*/reviews").permitAll()
                 // Contact form — public submit (no auth needed)
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/contact").permitAll()
+                // WebSocket SockJS handshake — Spring Security must allow HTTP layer;
+                // actual auth is enforced by StompAuthChannelInterceptor at STOMP CONNECT frame
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers(
                     "/v3/api-docs",
                     "/v3/api-docs/**",

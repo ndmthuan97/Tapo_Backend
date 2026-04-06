@@ -18,9 +18,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,18 +47,18 @@ public class StatisticsServiceImpl {
         int currentYear  = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
 
-        LocalDateTime thisMonthStart = LocalDate.of(currentYear, currentMonth, 1).atStartOfDay();
-        LocalDateTime thisMonthEnd   = thisMonthStart.plusMonths(1).minusSeconds(1);
-
-        LocalDateTime prevMonthStart = thisMonthStart.minusMonths(1);
-        LocalDateTime prevMonthEnd   = thisMonthStart.minusSeconds(1);
+        LocalDate thisMonthDate  = LocalDate.of(currentYear, currentMonth, 1);
+        Instant thisMonthStart   = thisMonthDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant thisMonthEnd     = thisMonthDate.plusMonths(1).atStartOfDay(ZoneOffset.UTC).toInstant().minusSeconds(1);
+        Instant prevMonthStart   = thisMonthDate.minusMonths(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant prevMonthEnd     = thisMonthStart.minusSeconds(1);
 
         // ── Revenue ─────────────────────────────────────────────────────────────
         BigDecimal revenueThisMonth = nvl(statsRepo.getTotalRevenue(thisMonthStart, thisMonthEnd));
         BigDecimal revenuePrevMonth = nvl(statsRepo.getTotalRevenue(prevMonthStart, prevMonthEnd));
         BigDecimal totalRevenue     = nvl(statsRepo.getTotalRevenue(
-                LocalDate.of(year, 1, 1).atStartOfDay(),
-                LocalDate.of(year, 12, 31).atTime(LocalTime.MAX)));
+                LocalDate.of(year, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant(),
+                LocalDate.of(year + 1, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant().minusSeconds(1)));
 
         double revenueGrowthPct = calcGrowth(revenueThisMonth, revenuePrevMonth);
 
