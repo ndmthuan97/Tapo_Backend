@@ -1,5 +1,6 @@
 package backend.dto.category;
 
+import backend.model.enums.CatalogStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -16,5 +17,5 @@ public record CategoryRequest(
 
         Integer sortOrder,
 
-        Boolean isVisible
+        CatalogStatus status
 ) {}

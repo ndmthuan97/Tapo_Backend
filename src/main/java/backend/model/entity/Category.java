@@ -1,5 +1,6 @@
 package backend.model.entity;
 
+import backend.model.enums.CatalogStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,7 @@ public class Category extends BaseEntity {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder = 0;
 
-    @Column(name = "is_visible", nullable = false)
-    private Boolean isVisible = true;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CatalogStatus status = CatalogStatus.ACTIVE;
 }

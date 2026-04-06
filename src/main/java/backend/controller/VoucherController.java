@@ -6,6 +6,7 @@ import backend.dto.voucher.ValidateVoucherRequest;
 import backend.dto.voucher.ValidateVoucherResponse;
 import backend.dto.voucher.VoucherDto;
 import backend.service.VoucherService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Voucher", description = "Quản lý mã giảm giá")
 public class VoucherController {
 
     private final VoucherService voucherService;

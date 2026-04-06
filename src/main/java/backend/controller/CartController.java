@@ -7,6 +7,7 @@ import backend.dto.cart.UpdateCartQuantityRequest;
 import backend.dto.common.ApiResponse;
 import backend.security.CustomUserDetails;
 import backend.service.CartService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
+@Tag(name = "Cart", description = "Quản lý giỏ hàng")
 public class CartController {
 
     private final CartService cartService;

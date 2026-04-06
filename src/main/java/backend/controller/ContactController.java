@@ -7,6 +7,7 @@ import backend.model.entity.ContactMessage;
 import backend.repository.ContactMessageRepository;
 import backend.service.EmailService;
 import backend.service.NotificationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -30,6 +31,7 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Contact", description = "Liên hệ & thông báo người dùng")
 public class ContactController {
 
     private final ContactMessageRepository contactRepo;

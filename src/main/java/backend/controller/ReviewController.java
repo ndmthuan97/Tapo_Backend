@@ -7,6 +7,7 @@ import backend.dto.review.ReviewDto;
 import backend.model.enums.ReviewStatus;
 import backend.security.CustomUserDetails;
 import backend.service.ReviewService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Review", description = "Đánh giá sản phẩm")
 public class ReviewController {
 
     private final ReviewService reviewService;

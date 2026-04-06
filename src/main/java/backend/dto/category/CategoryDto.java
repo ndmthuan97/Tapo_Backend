@@ -1,5 +1,7 @@
 package backend.dto.category;
 
+import backend.model.enums.CatalogStatus;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -10,7 +12,7 @@ public record CategoryDto(
         String description,
         String imageUrl,
         Integer sortOrder,
-        Boolean isVisible,
+        CatalogStatus status,
         Instant createdAt,
         Instant updatedAt
 ) {}

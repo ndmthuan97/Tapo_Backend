@@ -1,5 +1,6 @@
 package backend.dto.brand;
 
+import backend.model.enums.CatalogStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -12,5 +13,5 @@ public record BrandRequest(
 
         String logoUrl,
 
-        Boolean isVisible
+        CatalogStatus status
 ) {}

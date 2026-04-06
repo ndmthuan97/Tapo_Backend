@@ -4,6 +4,7 @@ import backend.dto.brand.BrandDto;
 import backend.dto.brand.BrandRequest;
 import backend.dto.common.ApiResponse;
 import backend.service.BrandService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/brands")
 @RequiredArgsConstructor
+@Tag(name = "Brand", description = "Quản lý thương hiệu sản phẩm")
 public class BrandController {
 
     private final BrandService brandService;

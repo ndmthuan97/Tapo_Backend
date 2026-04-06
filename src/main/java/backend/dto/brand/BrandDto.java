@@ -1,5 +1,7 @@
 package backend.dto.brand;
 
+import backend.model.enums.CatalogStatus;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -8,7 +10,7 @@ public record BrandDto(
         String name,
         String slug,
         String logoUrl,
-        Boolean isVisible,
+        CatalogStatus status,
         Instant createdAt,
         Instant updatedAt
 ) {}

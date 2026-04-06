@@ -3,6 +3,7 @@ package backend.controller;
 import backend.dto.common.ApiResponse;
 import backend.dto.statistics.DashboardStatsDto;
 import backend.service.impl.StatisticsServiceImpl;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 @RequestMapping("/api/admin/statistics")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "Statistics", description = "Thống kê & báo cáo doanh thu")
 public class StatisticsController {
 
     private final StatisticsServiceImpl statisticsService;

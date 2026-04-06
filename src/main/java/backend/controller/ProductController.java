@@ -6,6 +6,7 @@ import backend.dto.product.ProductRequest;
 import backend.dto.product.SimpleRefDto;
 import backend.model.enums.ProductStatus;
 import backend.service.ProductService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Tag(name = "Product", description = "Quản lý sản phẩm")
 public class ProductController {
 
     private final ProductService productService;

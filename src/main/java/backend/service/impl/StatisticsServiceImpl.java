@@ -32,6 +32,9 @@ public class StatisticsServiceImpl {
 
     private final StatisticsRepository statsRepo;
 
+    /** Null-safe BigDecimal coalescing — SQL SUM returns null if no rows match. */
+    private static BigDecimal nvl(BigDecimal v) { return v != null ? v : BigDecimal.ZERO; }
+
     /**
      * Returns cached dashboard statistics for a given year.
      * Cache key = year — each year is cached independently.
@@ -51,11 +54,11 @@ public class StatisticsServiceImpl {
         LocalDateTime prevMonthEnd   = thisMonthStart.minusSeconds(1);
 
         // ── Revenue ─────────────────────────────────────────────────────────────
-        BigDecimal revenueThisMonth = statsRepo.getTotalRevenue(thisMonthStart, thisMonthEnd);
-        BigDecimal revenuePrevMonth = statsRepo.getTotalRevenue(prevMonthStart, prevMonthEnd);
-        BigDecimal totalRevenue     = statsRepo.getTotalRevenue(
+        BigDecimal revenueThisMonth = nvl(statsRepo.getTotalRevenue(thisMonthStart, thisMonthEnd));
+        BigDecimal revenuePrevMonth = nvl(statsRepo.getTotalRevenue(prevMonthStart, prevMonthEnd));
+        BigDecimal totalRevenue     = nvl(statsRepo.getTotalRevenue(
                 LocalDate.of(year, 1, 1).atStartOfDay(),
-                LocalDate.of(year, 12, 31).atTime(LocalTime.MAX));
+                LocalDate.of(year, 12, 31).atTime(LocalTime.MAX)));
 
         double revenueGrowthPct = calcGrowth(revenueThisMonth, revenuePrevMonth);
 

@@ -4,6 +4,7 @@ import backend.dto.category.CategoryDto;
 import backend.dto.category.CategoryRequest;
 import backend.dto.common.ApiResponse;
 import backend.service.CategoryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
+@Tag(name = "Category", description = "Quản lý danh mục sản phẩm")
 public class CategoryController {
 
     private final CategoryService categoryService;

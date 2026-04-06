@@ -7,6 +7,7 @@ import backend.dto.order.OrderSummary;
 import backend.model.enums.OrderStatus;
 import backend.security.CustomUserDetails;
 import backend.service.OrderService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Order", description = "Quản lý đơn hàng")
 public class OrderController {
 
     private final OrderService orderService;

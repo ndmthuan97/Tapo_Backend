@@ -6,6 +6,7 @@ import backend.dto.returnrequest.ReturnRequestDto;
 import backend.model.enums.ReturnRequestStatus;
 import backend.security.CustomUserDetails;
 import backend.service.impl.ReturnRequestServiceImpl;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Return Request", description = "Quản lý yêu cầu đổi/trả hàng")
 public class ReturnRequestController {
 
         private final ReturnRequestServiceImpl returnService;

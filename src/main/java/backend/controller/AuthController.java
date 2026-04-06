@@ -7,6 +7,7 @@ import backend.dto.auth.TokenRefreshRequest;
 import backend.dto.common.ApiResponse;
 import backend.dto.common.CustomCode;
 import backend.service.AuthService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "Xác thực & phân quyền người dùng")
 public class AuthController {
 
     private final AuthService authService;

@@ -42,7 +42,7 @@ public class BrandServiceImpl implements BrandService {
         brand.setName(request.name());
         brand.setSlug(slug);
         brand.setLogoUrl(request.logoUrl());
-        brand.setIsVisible(request.isVisible() != null ? request.isVisible() : true);
+        brand.setStatus(request.status() != null ? request.status() : backend.model.enums.CatalogStatus.ACTIVE);
 
         return toDto(brandRepository.save(brand));
     }
@@ -56,7 +56,7 @@ public class BrandServiceImpl implements BrandService {
         brand.setName(request.name());
         brand.setSlug(slug);
         brand.setLogoUrl(request.logoUrl());
-        if (request.isVisible() != null) brand.setIsVisible(request.isVisible());
+        if (request.status() != null) brand.setStatus(request.status());
 
         return toDto(brandRepository.save(brand));
     }
@@ -92,6 +92,6 @@ public class BrandServiceImpl implements BrandService {
 
     private BrandDto toDto(Brand b) {
         return new BrandDto(b.getId(), b.getName(), b.getSlug(), b.getLogoUrl(),
-                b.getIsVisible(), b.getCreatedAt(), b.getUpdatedAt());
+                b.getStatus(), b.getCreatedAt(), b.getUpdatedAt());
     }
 }

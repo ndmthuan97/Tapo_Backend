@@ -4,6 +4,7 @@ import backend.dto.common.ApiResponse;
 import backend.dto.wishlist.WishlistItemDto;
 import backend.security.CustomUserDetails;
 import backend.service.WishlistService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/wishlist")
 @RequiredArgsConstructor
+@Tag(name = "Wishlist", description = "Danh sách sản phẩm yêu thích")
 public class WishlistController {
 
     private final WishlistService wishlistService;

@@ -5,6 +5,7 @@ import backend.dto.common.CustomCode;
 import backend.dto.user.*;
 import backend.model.enums.UserRole;
 import backend.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "User", description = "Quản lý tài khoản người dùng")
 public class UserController {
 
     private final UserService userService;

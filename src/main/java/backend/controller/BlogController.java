@@ -4,6 +4,7 @@ import backend.dto.blog.BlogCategoryDto;
 import backend.dto.blog.BlogPostDto;
 import backend.dto.common.ApiResponse;
 import backend.service.BlogService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/blog")
 @RequiredArgsConstructor
+@Tag(name = "Blog", description = "Quản lý bài viết Blog")
 public class BlogController {
 
     private final BlogService blogService;

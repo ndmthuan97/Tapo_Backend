@@ -44,7 +44,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setDescription(request.description());
         category.setImageUrl(request.imageUrl());
         category.setSortOrder(request.sortOrder() != null ? request.sortOrder() : 0);
-        category.setIsVisible(request.isVisible() != null ? request.isVisible() : true);
+        category.setStatus(request.status() != null ? request.status() : backend.model.enums.CatalogStatus.ACTIVE);
 
         return toDto(categoryRepository.save(category));
     }
@@ -60,7 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setDescription(request.description());
         category.setImageUrl(request.imageUrl());
         if (request.sortOrder() != null) category.setSortOrder(request.sortOrder());
-        if (request.isVisible() != null) category.setIsVisible(request.isVisible());
+        if (request.status() != null) category.setStatus(request.status());
 
         return toDto(categoryRepository.save(category));
     }
@@ -92,6 +92,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     private CategoryDto toDto(Category c) {
         return new CategoryDto(c.getId(), c.getName(), c.getSlug(), c.getDescription(),
-                c.getImageUrl(), c.getSortOrder(), c.getIsVisible(), c.getCreatedAt(), c.getUpdatedAt());
+                c.getImageUrl(), c.getSortOrder(), c.getStatus(), c.getCreatedAt(), c.getUpdatedAt());
     }
 }
