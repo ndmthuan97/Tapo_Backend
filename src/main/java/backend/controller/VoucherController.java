@@ -25,6 +25,25 @@ public class VoucherController {
 
     private final VoucherService voucherService;
 
+    // ── Customer: browse active vouchers ──────────────────────────────────────
+
+    /**
+     * GET /api/vouchers/active
+     * Public — no auth required.
+     * Returns paginated list of ACTIVE vouchers sorted by endDate ASC
+     * (sắp hết hạn trước) so users can act quickly.
+     */
+    @GetMapping("/api/vouchers/active")
+    public ResponseEntity<ApiResponse<Page<VoucherDto>>> getActiveVouchers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                voucherService.listActive(PageRequest.of(page, Math.min(size, 24),
+                        Sort.by("endDate").ascending()))
+        ));
+    }
+
     // ── Customer: validate a voucher code ─────────────────────────────────────
 
     /**

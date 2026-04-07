@@ -103,6 +103,14 @@ public class VoucherServiceImpl implements VoucherService {
         return voucherRepo.findAllByOrderByCreatedAtDesc(pageable).map(this::toDto);
     }
 
+    @Transactional(readOnly = true)
+    public Page<VoucherDto> listActive(Pageable pageable) {
+        Instant now = Instant.now();
+        return voucherRepo
+                .findByStatusAndStartDateBeforeAndEndDateAfter(VoucherStatus.ACTIVE, now, now, pageable)
+                .map(this::toDto);
+    }
+
     @Transactional
     public VoucherDto create(CreateVoucherRequest req) {
         if (voucherRepo.findByCode(req.code().trim().toUpperCase()).isPresent()) {

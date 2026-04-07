@@ -19,6 +19,9 @@ public interface VoucherService {
 
     Page<VoucherDto> listAll(Pageable pageable);
 
+    /** Public: only ACTIVE vouchers within valid date range. */
+    Page<VoucherDto> listActive(Pageable pageable);
+
     VoucherDto create(CreateVoucherRequest request);
 
     VoucherDto toggleStatus(UUID id);
