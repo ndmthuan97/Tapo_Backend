@@ -168,6 +168,12 @@ app:
   base-url: ${APP_BASE_URL:http://localhost:5173}
   mail:
     from-name: ${MAIL_FROM_NAME:Tapo Store}
+  # ── Azure F1 keep-alive (disabled locally, enabled on Azure via env var) ──
+  # Set KEEP_ALIVE_ENABLED=true in Azure App Service → Configuration → App settings
+  keep-alive:
+    enabled: ${KEEP_ALIVE_ENABLED:false}
+    # Override this if your Azure hostname differs from localhost self-ping
+    url: ${KEEP_ALIVE_URL:http://localhost:${server.port:8080}/actuator/health}
 
 # ===== RABBITMQ (disabled by default — only active on self-host profile) =====
 # Prevent Spring Boot from trying to connect to RabbitMQ when not self-hosting.
