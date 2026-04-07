@@ -194,8 +194,7 @@ class OrderServiceImplTest {
         a.setId(id);
         a.setRecipientName("Nguyen Van A");
         a.setPhoneNumber("0912345678");
-        a.setAddress("123 Nguyen Trai");
-        a.setDistrict("Thanh Xuan");
+        a.setAddress("123 Nguyen Trai, Phuong Thanh Xuan");
         a.setCity("Ha Noi");
         return a;
     }

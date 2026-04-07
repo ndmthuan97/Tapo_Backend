@@ -22,12 +22,11 @@ public class Address extends BaseEntity {
     @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
 
+    /** Địa chỉ đầy đủ: số nhà, tên đường, phường/xã (sau sát nhập VN bỏ cấp quận/huyện) */
     @Column(nullable = false, length = 500)
     private String address;
 
-    @Column(nullable = false, length = 100)
-    private String district;
-
+    /** Tỉnh / Thành phố trực thuộc Trung ương */
     @Column(nullable = false, length = 100)
     private String city;
 

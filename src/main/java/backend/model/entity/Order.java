@@ -46,7 +46,8 @@ public class Order extends BaseEntity {
     @Column(name = "shipping_address", nullable = false, length = 500)
     private String shippingAddress;
 
-    @Column(name = "shipping_district", nullable = false, length = 100)
+    /** Snapshot: quận/huyện (legacy — bỏ sau sát nhập VN 2025, nullable cho đơn mới) */
+    @Column(name = "shipping_district", nullable = true, length = 100)
     private String shippingDistrict;
 
     @Column(name = "shipping_city", nullable = false, length = 100)

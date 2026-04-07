@@ -4,6 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Yêu cầu tạo/cập nhật địa chỉ giao hàng.
+ * Sau sát nhập VN (2025): cấu trúc 2 cấp — tỉnh/thành phố → phường/xã (không còn quận/huyện).
+ * Trường {@code address} chứa: số nhà + tên đường + phường/xã.
+ */
 public record AddressRequest(
         @NotBlank(message = "Tên người nhận không được để trống")
         @Size(max = 150, message = "Tên người nhận tối đa 150 ký tự")
@@ -16,10 +21,6 @@ public record AddressRequest(
         @NotBlank(message = "Địa chỉ không được để trống")
         @Size(max = 500, message = "Địa chỉ tối đa 500 ký tự")
         String address,
-
-        @NotBlank(message = "Quận/huyện không được để trống")
-        @Size(max = 100)
-        String district,
 
         @NotBlank(message = "Tỉnh/thành phố không được để trống")
         @Size(max = 100)

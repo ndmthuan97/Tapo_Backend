@@ -129,7 +129,7 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingRecipientName(address.getRecipientName());
         order.setShippingPhone(address.getPhoneNumber());
         order.setShippingAddress(address.getAddress());
-        order.setShippingDistrict(address.getDistrict());
+        // shippingDistrict intentionally NOT set — district removed after VN 2025 admin reform
         order.setShippingCity(address.getCity());
         order.setSubtotal(subtotal);
         order.setShippingFee(SHIPPING_FEE);

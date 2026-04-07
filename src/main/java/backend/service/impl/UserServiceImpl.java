@@ -61,7 +61,6 @@ public class UserServiceImpl implements UserService {
                 a.getRecipientName(),
                 a.getPhoneNumber(),
                 a.getAddress(),
-                a.getDistrict(),
                 a.getCity(),
                 a.getIsDefault()
         );
@@ -128,7 +127,6 @@ public class UserServiceImpl implements UserService {
         address.setRecipientName(request.recipientName());
         address.setPhoneNumber(request.phoneNumber());
         address.setAddress(request.address());
-        address.setDistrict(request.district());
         address.setCity(request.city());
         address.setIsDefault(!hasExisting);
 
@@ -145,7 +143,6 @@ public class UserServiceImpl implements UserService {
         address.setRecipientName(request.recipientName());
         address.setPhoneNumber(request.phoneNumber());
         address.setAddress(request.address());
-        address.setDistrict(request.district());
         address.setCity(request.city());
 
         return toAddressDto(addressRepository.save(address));
