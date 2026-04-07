@@ -40,10 +40,12 @@ public class ProductController {
             @RequestParam(required = false)               UUID brandId,
             @RequestParam(required = false)               Long minPrice,
             @RequestParam(required = false)               Long maxPrice,
+            @RequestParam(required = false)               Double minRating,
+            @RequestParam(required = false)               Boolean inStock,
             @RequestParam(defaultValue = "createdAt,desc") String sort
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                productService.getProducts(page, size, search, status, categoryId, brandId, minPrice, maxPrice, sort)
+                productService.getProducts(page, size, search, status, categoryId, brandId, minPrice, maxPrice, minRating, inStock, sort)
         ));
     }
 

@@ -88,4 +88,20 @@ public class VoucherController {
     public ResponseEntity<ApiResponse<VoucherDto>> toggleStatus(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công", voucherService.toggleStatus(id)));
     }
+
+    @PutMapping("/api/admin/vouchers/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<VoucherDto>> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateVoucherRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật voucher thành công", voucherService.update(id, request)));
+    }
+
+    @DeleteMapping("/api/admin/vouchers/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+        voucherService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa voucher", null));
+    }
 }

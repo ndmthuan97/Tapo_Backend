@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,7 +40,13 @@ public record ProductRequest(
 
         String thumbnailUrl,
 
+        /** Additional gallery images (url, optional altText) */
+        List<ImageEntry> imageUrls,
+
         Map<String, String> specifications,
 
         ProductStatus status
-) {}
+) {
+    /** Lightweight record representing a single gallery image entry. */
+    public record ImageEntry(String url, String altText) {}
+}

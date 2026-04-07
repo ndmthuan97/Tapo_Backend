@@ -7,12 +7,15 @@ import backend.dto.auth.TokenRefreshRequest;
 import backend.dto.common.ApiResponse;
 import backend.dto.common.CustomCode;
 import backend.service.AuthService;
+import backend.service.RateLimiterService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,16 +25,33 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Auth", description = "Xác thực & phân quyền người dùng")
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthService        authService;
+    private final RateLimiterService rateLimiterService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        String ip = resolveIp(httpRequest);
+        if (!rateLimiterService.allowAuthAttempt(ip)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(ApiResponse.error(429, "Quá nhiều yêu cầu. Vui lòng thử lại sau."));
+        }
         return ResponseEntity
                 .ok(ApiResponse.success(CustomCode.CREATED.getDefaultMessage(), authService.register(request)));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        String ip = resolveIp(httpRequest);
+        if (!rateLimiterService.allowAuthAttempt(ip)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(ApiResponse.error(429, "Quá nhiều yêu cầu. Vui lòng thử lại sau."));
+        }
         return ResponseEntity
                 .ok(ApiResponse.success(CustomCode.SUCCESS.getDefaultMessage(), authService.login(request)));
     }
@@ -88,4 +108,9 @@ public class AuthController {
             @NotBlank String token,
             @NotBlank @Size(min = 6, max = 100) String newPassword
     ) {}
+
+    private String resolveIp(HttpServletRequest req) {
+        String xff = req.getHeader("X-Forwarded-For");
+        return (xff != null && !xff.isBlank()) ? xff.split(",")[0].trim() : req.getRemoteAddr();
+    }
 }

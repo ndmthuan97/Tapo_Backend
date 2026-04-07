@@ -13,7 +13,8 @@ import java.util.UUID;
 public interface ProductService {
 
     Page<ProductDto> getProducts(int page, int size, String search, ProductStatus status,
-                                 UUID categoryId, UUID brandId, Long minPrice, Long maxPrice, String sort);
+                                 UUID categoryId, UUID brandId, Long minPrice, Long maxPrice,
+                                 Double minRating, Boolean inStock, String sort);
 
     ProductDto getProduct(UUID id);
 

@@ -4,6 +4,7 @@ import backend.model.enums.ProductStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ public record ProductDto(
         Integer stock,
         ProductStatus status,
         String thumbnailUrl,
+        List<ProductImageDto> images,
         BigDecimal avgRating,
         Integer reviewCount,
         Integer soldCount,

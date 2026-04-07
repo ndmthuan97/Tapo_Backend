@@ -24,7 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
 
     /**
      * Paginated search with full filter support:
-     * keyword, status, categoryId, brandId, price range.
+     * keyword, status, categoryId, brandId, price range, minRating, inStock.
      */
     @Query(
         value = """
@@ -37,6 +37,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
               AND (:brandId IS NULL OR b.id = :brandId)
               AND (:minPrice IS NULL OR p.price >= :minPrice)
               AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+              AND (:minRating IS NULL OR p.avgRating >= :minRating)
+              AND (:inStock IS NULL OR :inStock = false OR p.stock > 0)
               AND (:search IS NULL OR
                    LOWER(p.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR
                    LOWER(b.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR
@@ -52,6 +54,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
               AND (:brandId IS NULL OR b.id = :brandId)
               AND (:minPrice IS NULL OR p.price >= :minPrice)
               AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+              AND (:minRating IS NULL OR p.avgRating >= :minRating)
+              AND (:inStock IS NULL OR :inStock = false OR p.stock > 0)
               AND (:search IS NULL OR
                    LOWER(p.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR
                    LOWER(b.name)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR
@@ -65,6 +69,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
             @Param("brandId")    UUID brandId,
             @Param("minPrice")   Long minPrice,
             @Param("maxPrice")   Long maxPrice,
+            @Param("minRating")  Double minRating,
+            @Param("inStock")    Boolean inStock,
             Pageable pageable
     );
 

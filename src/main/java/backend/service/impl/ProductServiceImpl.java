@@ -1,6 +1,7 @@
 package backend.service.impl;
 
 import backend.dto.product.ProductDto;
+import backend.dto.product.ProductImageDto;
 import backend.dto.product.ProductRequest;
 import backend.dto.product.SimpleRefDto;
 import backend.dto.common.CustomCode;
@@ -8,6 +9,7 @@ import backend.exception.AppException;
 import backend.model.entity.Brand;
 import backend.model.entity.Category;
 import backend.model.entity.Product;
+import backend.model.entity.ProductImage;
 import backend.model.enums.ProductStatus;
 import backend.repository.BrandRepository;
 import backend.repository.CategoryRepository;
@@ -24,6 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -42,12 +45,12 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductDto> getProducts(int page, int size, String search, ProductStatus status,
                                         UUID categoryId, UUID brandId, Long minPrice, Long maxPrice,
-                                        String sort) {
+                                        Double minRating, Boolean inStock, String sort) {
         Sort sortObj = parseSort(sort);
         PageRequest pageable = PageRequest.of(page, size, sortObj);
         String searchParam = (search != null && search.isBlank()) ? null : search;
         return productRepository
-                .searchProducts(searchParam, status, categoryId, brandId, minPrice, maxPrice, pageable)
+                .searchProducts(searchParam, status, categoryId, brandId, minPrice, maxPrice, minRating, inStock, pageable)
                 .map(this::toDto);
     }
 
@@ -93,12 +96,14 @@ public class ProductServiceImpl implements ProductService {
         product.setSpecifications(request.specifications());
         product.setStatus(request.status() != null ? request.status() : ProductStatus.DRAFT);
 
+        if (request.status() != null) product.setStatus(request.status());
+
+        syncImages(product, request.imageUrls());
         return toDto(productRepository.save(product));
     }
 
     @Override
     @Transactional
-    // java-pro: @Caching for multiple evictions -- avoid stale product-detail + metadata
     @Caching(evict = {
         @CacheEvict(value = "product-detail", key = "#id"),
         @CacheEvict(value = "products",       allEntries = true)
@@ -121,6 +126,7 @@ public class ProductServiceImpl implements ProductService {
         product.setSpecifications(request.specifications());
         if (request.status() != null) product.setStatus(request.status());
 
+        syncImages(product, request.imageUrls());
         return toDto(productRepository.save(product));
     }
 
@@ -235,6 +241,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductDto toDto(Product p) {
+        List<ProductImageDto> imageDtos = p.getImages().stream()
+                .map(img -> new ProductImageDto(img.getId(), img.getImageUrl(), img.getAltText(), img.getSortOrder()))
+                .toList();
         return new ProductDto(
                 p.getId(),
                 p.getName(),
@@ -245,6 +254,7 @@ public class ProductServiceImpl implements ProductService {
                 p.getStock(),
                 p.getStatus(),
                 p.getThumbnailUrl(),
+                imageDtos,
                 p.getAvgRating(),
                 p.getReviewCount(),
                 p.getSoldCount(),
@@ -256,5 +266,27 @@ public class ProductServiceImpl implements ProductService {
                 p.getCreatedAt(),
                 p.getUpdatedAt()
         );
+    }
+
+    /**
+     * Sync gallery images from request to entity.
+     * Uses clear + addAll pattern leveraging orphanRemoval=true on the collection.
+     * java-pro: avoids N+1 by operating on in-memory collection.
+     */
+    private void syncImages(Product product, List<ProductRequest.ImageEntry> entries) {
+        product.getImages().clear();
+        if (entries == null || entries.isEmpty()) return;
+        List<ProductImage> images = new ArrayList<>();
+        for (int i = 0; i < entries.size(); i++) {
+            ProductRequest.ImageEntry entry = entries.get(i);
+            if (entry.url() == null || entry.url().isBlank()) continue;
+            ProductImage img = new ProductImage();
+            img.setProduct(product);
+            img.setImageUrl(entry.url().trim());
+            img.setAltText(entry.altText());
+            img.setSortOrder(i);
+            images.add(img);
+        }
+        product.getImages().addAll(images);
     }
 }

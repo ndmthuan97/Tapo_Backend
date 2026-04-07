@@ -73,7 +73,7 @@ class ProductServiceImplTest {
         var request  = new ProductRequest(
                 "Laptop ABC", "laptop-abc", "Description", catId, brandId,
                 BigDecimal.valueOf(10_000_000), BigDecimal.valueOf(12_000_000),
-                5, null, null, ProductStatus.ACTIVE
+                5, null, null, null, ProductStatus.ACTIVE
         );
 
         given(categoryRepository.findById(catId)).willReturn(Optional.of(stubCategory(catId)));
@@ -99,7 +99,7 @@ class ProductServiceImplTest {
         var request = new ProductRequest(
                 "Laptop Updated", "laptop-updated", "New Desc", catId, brandId,
                 BigDecimal.valueOf(11_000_000), BigDecimal.valueOf(13_000_000),
-                8, null, null, ProductStatus.ACTIVE
+                8, null, null, null, ProductStatus.ACTIVE
         );
 
         given(productRepository.findByIdAndDeletedFalse(id)).willReturn(Optional.of(product));

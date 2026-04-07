@@ -130,6 +130,36 @@ public class VoucherServiceImpl implements VoucherService {
         return toDto(voucherRepo.save(v));
     }
 
+    @Override
+    @Transactional
+    public VoucherDto update(UUID id, CreateVoucherRequest req) {
+        Voucher v = voucherRepo.findById(id)
+                .orElseThrow(() -> new AuthException(CustomCode.VOUCHER_NOT_FOUND));
+        // Allow code update only if unchanged or not taken by another voucher
+        String newCode = req.code().trim().toUpperCase();
+        if (!v.getCode().equals(newCode) && voucherRepo.findByCode(newCode).isPresent()) {
+            throw new AuthException(CustomCode.VOUCHER_CODE_EXISTS);
+        }
+        v.setCode(newCode);
+        v.setName(req.name());
+        v.setDiscountType(req.discountType());
+        v.setDiscountValue(req.discountValue());
+        v.setMaxDiscountAmount(req.maxDiscountAmount());
+        v.setMinimumOrderValue(req.minimumOrderValue());
+        v.setUsageLimit(req.usageLimit());
+        v.setStartDate(req.startDate());
+        v.setEndDate(req.endDate());
+        return toDto(voucherRepo.save(v));
+    }
+
+    @Override
+    @Transactional
+    public void delete(UUID id) {
+        Voucher v = voucherRepo.findById(id)
+                .orElseThrow(() -> new AuthException(CustomCode.VOUCHER_NOT_FOUND));
+        voucherRepo.delete(v);
+    }
+
     @Transactional
     public VoucherDto toggleStatus(UUID id) {
         Voucher v = voucherRepo.findById(id)

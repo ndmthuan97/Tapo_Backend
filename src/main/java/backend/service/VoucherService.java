@@ -24,5 +24,9 @@ public interface VoucherService {
 
     VoucherDto create(CreateVoucherRequest request);
 
+    VoucherDto update(UUID id, CreateVoucherRequest request);
+
+    void delete(UUID id);
+
     VoucherDto toggleStatus(UUID id);
 }

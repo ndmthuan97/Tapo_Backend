@@ -7,6 +7,7 @@ import backend.dto.order.OrderSummary;
 import backend.model.enums.OrderStatus;
 import backend.security.CustomUserDetails;
 import backend.service.OrderService;
+import backend.service.RateLimiterService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,8 @@ import java.util.UUID;
 @Tag(name = "Order", description = "Quản lý đơn hàng")
 public class OrderController {
 
-    private final OrderService orderService;
+    private final OrderService       orderService;
+    private final RateLimiterService rateLimiterService;
 
     // ── Customer endpoints ──────────────────────────────────────────────────────
 
@@ -33,6 +35,10 @@ public class OrderController {
             @AuthenticationPrincipal CustomUserDetails principal,
             @Valid @RequestBody CreateOrderRequest request
     ) {
+        if (!rateLimiterService.allowCheckout(principal.getId().toString())) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(ApiResponse.error(429, "Bạn đã đặt quá nhiều đơn hàng. Vui lòng thử lại sau."));
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Đặt hàng thành công",
                         orderService.createOrder(principal.getId(), request)));
