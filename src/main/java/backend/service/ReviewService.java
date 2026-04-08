@@ -28,4 +28,7 @@ public interface ReviewService {
     AdminReviewDto rejectReview(UUID reviewId);
 
     long countPendingReviews();
+
+    /** Admin gửi phản hồi cho một đánh giá. */
+    AdminReviewDto replyReview(UUID reviewId, String reply);
 }

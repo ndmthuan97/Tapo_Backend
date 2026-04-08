@@ -4,6 +4,7 @@ import backend.dto.common.ApiResponse;
 import backend.dto.review.AdminReviewDto;
 import backend.dto.review.CreateReviewRequest;
 import backend.dto.review.ReviewDto;
+import backend.dto.review.ReviewReplyRequest;
 import backend.model.enums.ReviewStatus;
 import backend.security.CustomUserDetails;
 import backend.service.ReviewService;
@@ -101,6 +102,23 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Đánh giá đã bị từ chối.",
                 reviewService.rejectReview(id)
+        ));
+    }
+
+    /**
+     * POST /api/admin/reviews/{id}/reply
+     * Body: { "reply": "Cảm ơn bạn đã đánh giá..." }
+     * Gửi reply='' hoặc reply=null để xóa phản hồi.
+     */
+    @PostMapping("/api/admin/reviews/{id}/reply")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<AdminReviewDto>> replyReview(
+            @PathVariable UUID id,
+            @Valid @RequestBody ReviewReplyRequest body
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Đã gửi phản hồi.",
+                reviewService.replyReview(id, body.reply())
         ));
     }
 

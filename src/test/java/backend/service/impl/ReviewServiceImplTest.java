@@ -181,6 +181,80 @@ class ReviewServiceImplTest {
         then(reviewRepo).should().updateProductRatingStats(eq(prodId), anyDouble(), eq(10));
     }
 
+    // ── replyReview ───────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("replyReview: valid text → saves reply and repliedAt on review")
+    void replyReview_validText_savesReplyAndRepliedAt() {
+        UUID reviewId = UUID.randomUUID();
+        User    user    = stubUser(UUID.randomUUID());
+        Product product = stubProduct(UUID.randomUUID());
+        Review  review  = stubReview(user, product, ReviewStatus.APPROVED);
+
+        given(reviewRepo.findByIdForAdmin(reviewId)).willReturn(Optional.of(review));
+        given(reviewRepo.save(any())).willReturn(review);
+
+        reviewService.replyReview(reviewId, "Cảm ơn bạn đã đánh giá!");
+
+        ArgumentCaptor<Review> captor = ArgumentCaptor.forClass(Review.class);
+        then(reviewRepo).should().save(captor.capture());
+        assertThat(captor.getValue().getAdminReply()).isEqualTo("Cảm ơn bạn đã đánh giá!");
+        assertThat(captor.getValue().getRepliedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("replyReview: blank string → clears reply and repliedAt (delete reply)")
+    void replyReview_blankString_clearsReply() {
+        UUID reviewId = UUID.randomUUID();
+        User    user    = stubUser(UUID.randomUUID());
+        Product product = stubProduct(UUID.randomUUID());
+        Review  review  = stubReview(user, product, ReviewStatus.APPROVED);
+        review.setAdminReply("Old reply");
+        review.setRepliedAt(java.time.Instant.now());
+
+        given(reviewRepo.findByIdForAdmin(reviewId)).willReturn(Optional.of(review));
+        given(reviewRepo.save(any())).willReturn(review);
+
+        reviewService.replyReview(reviewId, "   "); // whitespace = blank
+
+        ArgumentCaptor<Review> captor = ArgumentCaptor.forClass(Review.class);
+        then(reviewRepo).should().save(captor.capture());
+        assertThat(captor.getValue().getAdminReply()).isNull();
+        assertThat(captor.getValue().getRepliedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("replyReview: reply text gets stripped of leading/trailing whitespace")
+    void replyReview_withPaddingWhitespace_stripsBeforeSaving() {
+        UUID reviewId = UUID.randomUUID();
+        User    user    = stubUser(UUID.randomUUID());
+        Product product = stubProduct(UUID.randomUUID());
+        Review  review  = stubReview(user, product, ReviewStatus.APPROVED);
+
+        given(reviewRepo.findByIdForAdmin(reviewId)).willReturn(Optional.of(review));
+        given(reviewRepo.save(any())).willReturn(review);
+
+        reviewService.replyReview(reviewId, "  Cảm ơn!  ");
+
+        ArgumentCaptor<Review> captor = ArgumentCaptor.forClass(Review.class);
+        then(reviewRepo).should().save(captor.capture());
+        assertThat(captor.getValue().getAdminReply()).isEqualTo("Cảm ơn!");
+    }
+
+    @Test
+    @DisplayName("replyReview: review not found → throws REVIEW_NOT_FOUND")
+    void replyReview_reviewNotFound_throwsAuthException() {
+        UUID reviewId = UUID.randomUUID();
+
+        given(reviewRepo.findByIdForAdmin(reviewId)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.replyReview(reviewId, "Hello"))
+                .isInstanceOf(AuthException.class)
+                .hasMessageContaining(CustomCode.REVIEW_NOT_FOUND.getDefaultMessage());
+
+        then(reviewRepo).should(never()).save(any());
+    }
+
     // ── Test fixtures ─────────────────────────────────────────────────────────
 
     private User stubUser(UUID id) {

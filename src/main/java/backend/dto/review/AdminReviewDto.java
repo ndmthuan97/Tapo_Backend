@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Extended ReviewDto for Admin panel — includes product info and review status.
+ * Extended ReviewDto for Admin panel — includes product info, status and admin reply.
  */
 public record AdminReviewDto(
         UUID id,
@@ -24,5 +24,8 @@ public record AdminReviewDto(
         String comment,
         List<String> images,
         ReviewStatus status,
-        Instant createdAt
+        Instant createdAt,
+        // Admin reply (nullable)
+        String adminReply,
+        Instant repliedAt
 ) {}

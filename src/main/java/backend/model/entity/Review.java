@@ -47,4 +47,11 @@ public class Review extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ReviewStatus status = ReviewStatus.PENDING;
+
+    /** Admin phản hồi đánh giá — nullable nếu chưa có reply */
+    @Column(columnDefinition = "TEXT")
+    private String adminReply;
+
+    @Column(name = "replied_at")
+    private java.time.Instant repliedAt;
 }

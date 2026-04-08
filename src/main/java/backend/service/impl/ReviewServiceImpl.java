@@ -67,7 +67,9 @@ public class ReviewServiceImpl implements ReviewService {
                 r.getComment(),
                 r.getImages(),
                 r.getStatus(),
-                r.getCreatedAt()
+                r.getCreatedAt(),
+                r.getAdminReply(),
+                r.getRepliedAt()
         );
     }
 
@@ -167,6 +169,16 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public long countPendingReviews() {
         return reviewRepo.countByStatus(ReviewStatus.PENDING);
+    }
+
+    @Override
+    @Transactional
+    public AdminReviewDto replyReview(UUID reviewId, String reply) {
+        Review review = reviewRepo.findByIdForAdmin(reviewId)
+                .orElseThrow(() -> new AuthException(CustomCode.REVIEW_NOT_FOUND));
+        review.setAdminReply(reply != null && !reply.isBlank() ? reply.strip() : null);
+        review.setRepliedAt(reply != null && !reply.isBlank() ? java.time.Instant.now() : null);
+        return toAdminDto(reviewRepo.save(review));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
