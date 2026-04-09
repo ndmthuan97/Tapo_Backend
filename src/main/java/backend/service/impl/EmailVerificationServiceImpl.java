@@ -4,6 +4,7 @@ import backend.dto.common.CustomCode;
 import backend.exception.AuthException;
 import backend.model.enums.UserStatus;
 import backend.repository.UserRepository;
+import backend.service.EmailService;
 import backend.service.EmailVerificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final StringRedisTemplate redis;
     private final JavaMailSender mailSender;
     private final UserRepository userRepo;
+    private final EmailService emailService;
 
     @Value("${app.base-url:http://localhost:5173}")
     private String appBaseUrl;
@@ -83,6 +85,9 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         redis.delete(USER_PREFIX + userId);
 
         log.info("[EmailVerification] User {} verified successfully", user.getEmail());
+
+        // Send welcome email asynchronously — non-blocking
+        emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
     }
 
     // ── Resend verification email ─────────────────────────────────────────────

@@ -395,4 +395,85 @@ public class EmailServiceImpl implements EmailService {
             </body></html>
             """.formatted(escapeHtml(fullName), loginUrl);
     }
+
+    // ── Welcome email (after email verification) ─────────────────────────────
+
+    @Async
+    @Override
+    public void sendWelcomeEmail(String toEmail, String fullName) {
+        String subject = "🎉 Chào mừng đến với Tapo Store!";
+        String html = buildWelcomeHtml(fullName);
+        sendSafely(toEmail, subject, html);
+    }
+
+    private String buildWelcomeHtml(String fullName) {
+        String shopUrl   = appBaseUrl + "/products";
+        String ordersUrl = appBaseUrl + "/orders";
+        return """
+            <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width,initial-scale=1.0">
+            </head>
+            <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+              <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 0;">
+                <tr><td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0"
+                         style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                    <!-- Header gradient -->
+                    <tr><td style="background:linear-gradient(135deg,#f97316 0%%,#fb923c 100%%);padding:48px 40px;text-align:center;">
+                      <div style="font-size:48px;margin-bottom:12px;">🎉</div>
+                      <h1 style="color:#fff;margin:0;font-size:30px;font-weight:900;letter-spacing:-0.5px;">Chào mừng đến với Tapo!</h1>
+                      <p style="color:rgba(255,255,255,0.9);margin:10px 0 0;font-size:15px;">Tài khoản của bạn đã được xác minh thành công</p>
+                    </td></tr>
+                    <!-- Body -->
+                    <tr><td style="padding:40px;">
+                      <p style="color:#374151;font-size:16px;margin:0 0 12px;">Xin chào <strong>%s</strong>,</p>
+                      <p style="color:#6b7280;font-size:14px;line-height:1.7;margin:0 0 28px;">
+                        Chúc mừng! Tài khoản của bạn tại <strong>Tapo Store</strong> đã được kích hoạt.<br>
+                        Khám phá hàng nghìn sản phẩm công nghệ chính hãng với giá tốt nhất.
+                      </p>
+                      <!-- Benefits -->
+                      <table width="100%%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;">
+                        <tr>
+                          <td width="33%%" style="text-align:center;padding:16px 8px;background:#fff7ed;border-radius:12px;margin:4px;">
+                            <div style="font-size:24px;">🚚</div>
+                            <p style="margin:6px 0 0;font-size:12px;font-weight:700;color:#374151;">Giao hàng nhanh</p>
+                            <p style="margin:2px 0 0;font-size:11px;color:#9ca3af;">Toàn quốc</p>
+                          </td>
+                          <td width="4%%"></td>
+                          <td width="33%%" style="text-align:center;padding:16px 8px;background:#fff7ed;border-radius:12px;">
+                            <div style="font-size:24px;">🛡️</div>
+                            <p style="margin:6px 0 0;font-size:12px;font-weight:700;color:#374151;">Bảo hành chính hãng</p>
+                            <p style="margin:2px 0 0;font-size:11px;color:#9ca3af;">12–24 tháng</p>
+                          </td>
+                          <td width="4%%"></td>
+                          <td width="30%%" style="text-align:center;padding:16px 8px;background:#fff7ed;border-radius:12px;">
+                            <div style="font-size:24px;">↩️</div>
+                            <p style="margin:6px 0 0;font-size:12px;font-weight:700;color:#374151;">Đổi trả 15 ngày</p>
+                            <p style="margin:2px 0 0;font-size:11px;color:#9ca3af;">Không câu hỏi</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <!-- CTA buttons -->
+                      <div style="text-align:center;margin:0 0 24px;">
+                        <a href="%s" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;padding:14px 36px;border-radius:12px;font-weight:700;font-size:15px;margin-right:8px;">
+                          🛍️ Bắt đầu mua sắm
+                        </a>
+                        <a href="%s" style="display:inline-block;background:#fff;color:#f97316;text-decoration:none;padding:14px 24px;border-radius:12px;font-weight:600;font-size:14px;border:2px solid #f97316;">
+                          Đơn hàng của tôi
+                        </a>
+                      </div>
+                      <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">
+                        Nếu bạn có thắc mắc, hãy liên hệ <a href="mailto:support@tapo.vn" style="color:#f97316;">support@tapo.vn</a>
+                      </p>
+                    </td></tr>
+                    <!-- Footer -->
+                    <tr><td style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #f3f4f6;">
+                      <p style="color:#9ca3af;font-size:11px;margin:0;">© 2025 Tapo Store. Mọi quyền được bảo lưu.</p>
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
+            </body></html>
+            """.formatted(escapeHtml(fullName), shopUrl, ordersUrl);
+    }
 }

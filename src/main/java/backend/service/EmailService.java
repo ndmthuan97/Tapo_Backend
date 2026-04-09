@@ -32,4 +32,7 @@ public interface EmailService {
 
     /** Gửi email thông báo tài khoản đã được mở khóa bởi admin */
     void sendAccountUnlocked(String toEmail, String fullName);
+
+    /** Gửi email chào mừng sau khi user xác minh email thành công */
+    void sendWelcomeEmail(String toEmail, String fullName);
 }
