@@ -95,4 +95,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
             String name,
             ProductStatus status
     );
+
+    /** Sitemap — return only IDs of ACTIVE non-deleted products (minimal projection) */
+    @Query("SELECT CAST(p.id AS string) FROM Product p WHERE p.status = :status AND p.deleted = false")
+    List<String> findIdsByStatus(@Param("status") ProductStatus status);
 }

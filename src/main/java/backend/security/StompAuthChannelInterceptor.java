@@ -20,9 +20,10 @@ import org.springframework.util.StringUtils;
  * Reuses {@link JwtTokenProvider} và {@link CustomUserDetailsService} —
  * không duplicate JWT parsing logic.
  *
- * <p>Chỉ cho phép ADMIN/STAFF subscribe {@code /topic/admin/*}.
- * Request bị reject sẽ throw {@link IllegalArgumentException} —
- * Spring STOMP sẽ tự động close WebSocket connection.
+ * <p>Tất cả authenticated user (ROLE_USER, ROLE_ADMIN, ROLE_STAFF) đều được phép kết nối.
+ * Authorization theo topic được STOMP message broker tự xử lý tại tầng subscribe.
+ * - Admin: subscribe {@code /topic/admin/*}
+ * - User: subscribe {@code /user/queue/notifications} (user-specific via convertAndSendToUser)
  */
 @Slf4j
 @Component
@@ -61,22 +62,15 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         String email = jwtTokenProvider.getEmailFromToken(token);
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-        // Check ADMIN or STAFF role — java-pro: role check at connection time (fail-fast)
-        boolean hasAdminAccess = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
-                        || a.getAuthority().equals("ROLE_STAFF"));
-
-        if (!hasAdminAccess) {
-            log.warn("[WS] STOMP CONNECT rejected: user {} lacks admin/staff role", email);
-            throw new IllegalArgumentException("WebSocket: Insufficient privileges");
-        }
-
-        // Set principal on the WebSocket session — downstream handlers can use it
+        // Set principal — all authenticated roles (USER/ADMIN/STAFF) may connect.
+        // Topic-level access control is handled by the broker and subscription paths.
         var auth = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
         accessor.setUser(auth);
 
-        log.debug("[WS] STOMP CONNECT authenticated: {}", email);
+        log.debug("[WS] STOMP CONNECT authenticated: {} roles={}", email,
+                userDetails.getAuthorities());
         return message;
     }
 }
+

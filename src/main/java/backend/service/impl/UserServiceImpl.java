@@ -10,6 +10,7 @@ import backend.model.enums.UserRole;
 import backend.model.enums.UserStatus;
 import backend.repository.AddressRepository;
 import backend.repository.UserRepository;
+import backend.service.EmailService;
 import backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     // ─────────────────────────── Helpers ──────────────────────────────────
 
@@ -223,6 +225,8 @@ public class UserServiceImpl implements UserService {
         }
         user.setStatus(UserStatus.LOCKED);
         userRepository.save(user);
+        // Fire-and-forget — email failure must not roll back the transaction
+        emailService.sendAccountLocked(user.getEmail(), user.getFullName());
     }
 
     @Override
@@ -234,5 +238,7 @@ public class UserServiceImpl implements UserService {
         }
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
+        // Fire-and-forget — email failure must not roll back the transaction
+        emailService.sendAccountUnlocked(user.getEmail(), user.getFullName());
     }
 }

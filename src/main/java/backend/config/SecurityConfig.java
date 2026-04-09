@@ -68,6 +68,9 @@ public class SecurityConfig {
                 // WebSocket SockJS handshake — Spring Security must allow HTTP layer;
                 // actual auth is enforced by StompAuthChannelInterceptor at STOMP CONNECT frame
                 .requestMatchers("/ws/**").permitAll()
+                // SEO Sitemap — public for crawlers
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/sitemap.xml").permitAll()
+                // Vouchers — public listing
                 .requestMatchers(
                     "/v3/api-docs",
                     "/v3/api-docs/**",

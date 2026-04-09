@@ -12,6 +12,7 @@ import backend.model.enums.ReturnRequestStatus;
 import backend.repository.OrderRepository;
 import backend.repository.ReturnRequestRepository;
 import backend.repository.UserRepository;
+import backend.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,7 @@ public class ReturnRequestServiceImpl {
     private final ReturnRequestRepository returnRepo;
     private final OrderRepository orderRepo;
     private final UserRepository userRepo;
+    private final NotificationService notificationService;
 
     // ── Mapping ──────────────────────────────────────────────────────────────────
 
@@ -115,6 +117,15 @@ public class ReturnRequestServiceImpl {
             rr.getOrder().setStatus(OrderStatus.RETURNED);
         }
 
-        return toDto(returnRepo.save(rr));
+        ReturnRequest saved = returnRepo.save(rr);
+
+        // Fire-and-forget WS notification to the customer
+        boolean approved = newStatus == ReturnRequestStatus.APPROVED;
+        if (approved || newStatus == ReturnRequestStatus.REJECTED) {
+            notificationService.notifyUserReturnDecision(
+                    saved.getUser().getId(), saved.getOrder().getOrderCode(), approved);
+        }
+
+        return toDto(saved);
     }
 }

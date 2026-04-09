@@ -297,4 +297,102 @@ public class EmailServiceImpl implements EmailService {
             escapeHtml(replyContent)
         );
     }
+
+    // ── Account lock/unlock emails ────────────────────────────────────────────────
+
+    @Async
+    @Override
+    public void sendAccountLocked(String toEmail, String fullName) {
+        String subject = "🔒 Tài khoản Tapo Store của bạn đã bị khóa";
+        String html = buildAccountLockedHtml(fullName);
+        sendSafely(toEmail, subject, html);
+    }
+
+    @Async
+    @Override
+    public void sendAccountUnlocked(String toEmail, String fullName) {
+        String subject = "✅ Tài khoản Tapo Store của bạn đã được mở khóa";
+        String html = buildAccountUnlockedHtml(fullName);
+        sendSafely(toEmail, subject, html);
+    }
+
+    private String buildAccountLockedHtml(String fullName) {
+        String contactUrl = appBaseUrl + "/contact";
+        return """
+            <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"></head>
+            <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+              <table width="100%%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+                <tr><td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                    <tr><td style="background:linear-gradient(135deg,#ef4444,#f87171);padding:36px;text-align:center;">
+                      <h1 style="color:#fff;margin:0;font-size:26px;font-weight:800;">Tapo Store</h1>
+                      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">🔒 Thông báo tài khoản</p>
+                    </td></tr>
+                    <tr><td style="padding:32px;">
+                      <p style="color:#374151;font-size:15px;margin:0 0 16px;">Xin chào <strong>%s</strong>,</p>
+                      <p style="color:#6b7280;font-size:13px;line-height:1.8;margin:0 0 20px;">
+                        Chúng tôi xin thông báo rằng tài khoản của bạn tại <strong>Tapo Store</strong>
+                        đã bị <strong style="color:#ef4444;">tạm khóa</strong> bởi đội ngũ quản trị.
+                      </p>
+                      <div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:0 12px 12px 0;padding:16px 20px;margin:0 0 24px;">
+                        <p style="margin:0;font-size:13px;color:#374151;line-height:1.6;">
+                          Trong thời gian tài khoản bị khóa, bạn sẽ không thể đăng nhập
+                          hoặc thực hiện các giao dịch trên hệ thống.
+                        </p>
+                      </div>
+                      <p style="color:#6b7280;font-size:13px;margin:0 0 24px;">
+                        Nếu bạn cho rằng đây là nhầm lẫn hoặc muốn khiếu nại, vui lòng liên hệ đội ngũ hỗ trợ ngay.
+                      </p>
+                      <div style="text-align:center;">
+                        <a href="%s" style="display:inline-block;background:#ef4444;color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-weight:700;font-size:14px;">
+                          Liên hệ hỗ trợ →
+                        </a>
+                      </div>
+                    </td></tr>
+                    <tr><td style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #f3f4f6;">
+                      <p style="color:#9ca3af;font-size:11px;margin:0;">© 2025 Tapo Store. Mọi quyền được bảo lưu.</p>
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
+            </body></html>
+            """.formatted(escapeHtml(fullName), contactUrl);
+    }
+
+    private String buildAccountUnlockedHtml(String fullName) {
+        String loginUrl = appBaseUrl + "/login";
+        return """
+            <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"></head>
+            <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+              <table width="100%%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+                <tr><td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                    <tr><td style="background:linear-gradient(135deg,#10b981,#34d399);padding:36px;text-align:center;">
+                      <h1 style="color:#fff;margin:0;font-size:26px;font-weight:800;">Tapo Store</h1>
+                      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">✅ Tài khoản đã được kích hoạt</p>
+                    </td></tr>
+                    <tr><td style="padding:32px;">
+                      <p style="color:#374151;font-size:15px;margin:0 0 16px;">Xin chào <strong>%s</strong>,</p>
+                      <p style="color:#6b7280;font-size:13px;line-height:1.8;margin:0 0 20px;">
+                        Chúng tôi vui mừng thông báo tài khoản của bạn tại <strong>Tapo Store</strong>
+                        đã được <strong style="color:#10b981;">mở khóa</strong> và hoạt động trở lại bình thường.
+                      </p>
+                      <p style="color:#6b7280;font-size:13px;margin:0 0 24px;">
+                        Bạn có thể đăng nhập và tiếp tục mua sắm ngay bây giờ. Cảm ơn sự kiên nhẫn của bạn!
+                      </p>
+                      <div style="text-align:center;">
+                        <a href="%s" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-weight:700;font-size:14px;">
+                          Đăng nhập ngay →
+                        </a>
+                      </div>
+                    </td></tr>
+                    <tr><td style="background:#f9fafb;padding:20px;text-align:center;border-top:1px solid #f3f4f6;">
+                      <p style="color:#9ca3af;font-size:11px;margin:0;">© 2025 Tapo Store. Mọi quyền được bảo lưu.</p>
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
+            </body></html>
+            """.formatted(escapeHtml(fullName), loginUrl);
+    }
 }

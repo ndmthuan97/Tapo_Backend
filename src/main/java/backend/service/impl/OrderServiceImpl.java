@@ -292,7 +292,13 @@ public class OrderServiceImpl implements OrderService {
         hist.setCreatedAt(Instant.now());
         order.getStatusHistory().add(hist);
 
-        return toOrderDto(orderRepo.save(order));
+        Order saved = orderRepo.save(order);
+
+        // Fire-and-forget WS push to the customer
+        notificationService.notifyUserOrderStatusChanged(
+                saved.getUser().getId(), saved.getOrderCode(), newStatus.name());
+
+        return toOrderDto(saved);
     }
 
     @Override

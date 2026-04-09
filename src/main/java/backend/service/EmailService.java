@@ -26,4 +26,10 @@ public interface EmailService {
      * @param replyContent  Nội dung admin phản hồi
      */
     void sendContactReply(String toEmail, String customerName, String originalTopic, String replyContent);
+
+    /** Gửi email thông báo tài khoản đã bị khóa bởi admin */
+    void sendAccountLocked(String toEmail, String fullName);
+
+    /** Gửi email thông báo tài khoản đã được mở khóa bởi admin */
+    void sendAccountUnlocked(String toEmail, String fullName);
 }
