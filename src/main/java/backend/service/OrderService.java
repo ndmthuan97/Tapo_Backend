@@ -1,11 +1,13 @@
 package backend.service;
 
+import backend.dto.order.BulkStatusRequest;
 import backend.dto.order.CreateOrderRequest;
 import backend.dto.order.OrderDto;
 import backend.dto.order.OrderSummary;
 import backend.model.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface OrderService {
@@ -23,6 +25,9 @@ public interface OrderService {
 
     /** Admin: change order status */
     OrderDto updateOrderStatus(UUID orderId, OrderStatus newStatus, String note);
+
+    /** Admin: bulk update status for multiple orders — returns list of updated order codes */
+    List<String> bulkUpdateStatus(BulkStatusRequest request);
 
     /** Admin: get single order detail (no userId restriction) */
     OrderDto adminGetOrderDetail(UUID orderId);

@@ -292,6 +292,21 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
+    public List<String> bulkUpdateStatus(BulkStatusRequest request) {
+        List<String> updatedCodes = new java.util.ArrayList<>();
+        for (UUID id : request.orderIds()) {
+            try {
+                OrderDto dto = updateOrderStatus(id, request.newStatus(), request.note());
+                updatedCodes.add(dto.orderCode());
+            } catch (Exception ignored) {
+                // Skip invalid/not-found orders — partial success allowed
+            }
+        }
+        return updatedCodes;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public OrderDto adminGetOrderDetail(UUID orderId) {
         Order order = orderRepo.findByIdWithDetail(orderId)

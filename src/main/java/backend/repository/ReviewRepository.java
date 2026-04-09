@@ -39,15 +39,20 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     // ── Admin ─────────────────────────────────────────────────────────────────
 
-    /** Paginated list filtered by status (null = all) */
+    /** Paginated list filtered by status (null = all) and rating (null = all) */
     @Query("""
         SELECT r FROM Review r
         JOIN FETCH r.user u
         JOIN FETCH r.product p
         WHERE (:status IS NULL OR r.status = :status)
+          AND (:rating IS NULL OR r.rating = :rating)
         ORDER BY r.createdAt DESC
     """)
-    Page<Review> findAllForAdmin(@Param("status") ReviewStatus status, Pageable pageable);
+    Page<Review> findAllForAdmin(
+            @Param("status") ReviewStatus status,
+            @Param("rating") Integer rating,
+            Pageable pageable
+    );
 
     /** Single review with all associations for admin detail */
     @Query("""

@@ -135,8 +135,8 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AdminReviewDto> listAllReviews(ReviewStatus status, Pageable pageable) {
-        return reviewRepo.findAllForAdmin(status, pageable).map(this::toAdminDto);
+    public Page<AdminReviewDto> listAllReviews(ReviewStatus status, Integer rating, Pageable pageable) {
+        return reviewRepo.findAllForAdmin(status, rating, pageable).map(this::toAdminDto);
     }
 
     @Override

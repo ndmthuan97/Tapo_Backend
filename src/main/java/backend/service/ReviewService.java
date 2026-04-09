@@ -21,7 +21,7 @@ public interface ReviewService {
 
     // ── Admin ─────────────────────────────────────────────────────────────────
 
-    Page<AdminReviewDto> listAllReviews(ReviewStatus status, Pageable pageable);
+    Page<AdminReviewDto> listAllReviews(ReviewStatus status, Integer rating, Pageable pageable);
 
     AdminReviewDto approveReview(UUID reviewId);
 

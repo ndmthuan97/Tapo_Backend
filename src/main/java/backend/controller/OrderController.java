@@ -108,4 +108,14 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(
                 orderService.adminGetOrderDetail(id)));
     }
+
+    @PatchMapping("/api/admin/orders/bulk-status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SALES_STAFF')")
+    public ResponseEntity<ApiResponse<java.util.List<String>>> bulkUpdateStatus(
+            @Valid @RequestBody backend.dto.order.BulkStatusRequest request
+    ) {
+        java.util.List<String> updated = orderService.bulkUpdateStatus(request);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Cập nhật " + updated.size() + " đơn hàng thành công", updated));
+    }
 }

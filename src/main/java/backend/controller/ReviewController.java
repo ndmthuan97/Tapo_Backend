@@ -69,19 +69,21 @@ public class ReviewController {
     // ── Admin ─────────────────────────────────────────────────────────────────
 
     /**
-     * GET /api/admin/reviews?status=PENDING&page=0&size=20
+     * GET /api/admin/reviews?status=PENDING&rating=5&page=0&size=20
      * status: PENDING | APPROVED | REJECTED | (blank = all)
+     * rating: 1-5 | (blank = all)
      */
     @GetMapping("/api/admin/reviews")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<AdminReviewDto>>> listAllReviews(
             @RequestParam(required = false) ReviewStatus status,
+            @RequestParam(required = false) Integer rating,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return ResponseEntity.ok(ApiResponse.success(
-                reviewService.listAllReviews(status, pageable)
+                reviewService.listAllReviews(status, rating, pageable)
         ));
     }
 
