@@ -30,6 +30,7 @@ public record OrderDto(
         BigDecimal totalAmount,
 
         String customerNote,
+        String cancelReason,
         List<OrderItemDto> items,
         List<OrderStatusHistoryDto> statusHistory,
         Instant createdAt

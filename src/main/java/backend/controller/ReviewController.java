@@ -4,6 +4,7 @@ import backend.dto.common.ApiResponse;
 import backend.dto.review.AdminReviewDto;
 import backend.dto.review.CreateReviewRequest;
 import backend.dto.review.ReviewDto;
+import backend.dto.review.BulkReviewActionRequest;
 import backend.dto.review.ReviewReplyRequest;
 import backend.model.enums.ReviewStatus;
 import backend.security.CustomUserDetails;
@@ -20,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -122,6 +124,23 @@ public class ReviewController {
                 "Đã gửi phản hồi.",
                 reviewService.replyReview(id, body.reply())
         ));
+    }
+
+    /**
+     * PATCH /api/admin/reviews/bulk-action
+     * Body: { "reviewIds": ["uuid1","uuid2"], "action": "APPROVE" | "REJECT" }
+     * Returns list of processed reviewIds.
+     */
+    @PatchMapping("/api/admin/reviews/bulk-action")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<UUID>>> bulkAction(
+            @Valid @RequestBody BulkReviewActionRequest body
+    ) {
+        List<UUID> processed = reviewService.bulkAction(body.reviewIds(), body.action());
+        String msg = body.action() == BulkReviewActionRequest.BulkAction.APPROVE
+                ? "Đã duyệt " + processed.size() + " đánh giá"
+                : "Đã từ chối " + processed.size() + " đánh giá";
+        return ResponseEntity.ok(ApiResponse.success(msg, processed));
     }
 
     /** GET /api/admin/reviews/pending-count */

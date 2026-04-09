@@ -89,4 +89,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
             @Param("excludeId")  UUID excludeId,
             Pageable pageable
     );
+
+    /** Search autocomplete suggestions */
+    List<Product> findTop5ByNameContainingIgnoreCaseAndStatusAndDeletedFalseOrderByNameAsc(
+            String name,
+            ProductStatus status
+    );
 }

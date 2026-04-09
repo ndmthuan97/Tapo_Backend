@@ -2,6 +2,7 @@ package backend.controller;
 
 import backend.dto.common.ApiResponse;
 import backend.dto.order.CreateOrderRequest;
+import backend.dto.order.CancelOrderRequest;
 import backend.dto.order.OrderDto;
 import backend.dto.order.OrderSummary;
 import backend.model.enums.OrderStatus;
@@ -69,10 +70,12 @@ public class OrderController {
     @PutMapping("/api/orders/{id}/cancel")
     public ResponseEntity<ApiResponse<OrderDto>> cancelOrder(
             @AuthenticationPrincipal CustomUserDetails principal,
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            @RequestBody(required = false) CancelOrderRequest request
     ) {
+        String reason = (request != null) ? request.cancelReason() : null;
         return ResponseEntity.ok(ApiResponse.success("Đã hủy đơn hàng",
-                orderService.cancelOrder(principal.getId(), id)));
+                orderService.cancelOrder(principal.getId(), id, reason)));
     }
 
     // ── Admin endpoints ─────────────────────────────────────────────────────────

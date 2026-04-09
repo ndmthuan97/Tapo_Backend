@@ -4,6 +4,7 @@ import backend.dto.product.ProductDto;
 import backend.dto.product.ProductImageDto;
 import backend.dto.product.ProductRequest;
 import backend.dto.product.SimpleRefDto;
+import backend.dto.product.SuggestDto;
 import backend.dto.common.CustomCode;
 import backend.exception.AppException;
 import backend.model.entity.Brand;
@@ -71,6 +72,20 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findRelated(categoryId, productId, pageable)
                 .stream()
                 .map(this::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "product-suggest", key = "#query", unless = "#result.isEmpty()")
+    public List<SuggestDto> suggestProducts(String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        return productRepository.findTop5ByNameContainingIgnoreCaseAndStatusAndDeletedFalseOrderByNameAsc(
+                        query.trim(), ProductStatus.ACTIVE)
+                .stream()
+                .map(p -> new SuggestDto(p.getId(), p.getName(), p.getSlug(), p.getThumbnailUrl(), p.getPrice()))
                 .toList();
     }
 

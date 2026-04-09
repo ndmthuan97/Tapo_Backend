@@ -158,7 +158,7 @@ class OrderServiceImplTest {
         given(orderRepo.findByIdAndUserIdWithDetail(orderId, userId))
                 .willReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> orderService.cancelOrder(userId, orderId))
+        assertThatThrownBy(() -> orderService.cancelOrder(userId, orderId, "changed my mind"))
                 .isInstanceOf(AuthException.class)
                 .hasMessageContaining(CustomCode.ORDER_CANNOT_CANCEL.getDefaultMessage());
     }

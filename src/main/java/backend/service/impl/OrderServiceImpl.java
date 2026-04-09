@@ -66,7 +66,7 @@ public class OrderServiceImpl implements OrderService {
                 o.getShippingRecipientName(), o.getShippingPhone(),
                 o.getShippingAddress(), o.getShippingDistrict(), o.getShippingCity(),
                 o.getSubtotal(), o.getDiscountAmount(), o.getShippingFee(), o.getTotalAmount(),
-                o.getCustomerNote(),
+                o.getCustomerNote(), o.getCancelReason(),
                 o.getItems().stream().map(this::toItemDto).toList(),
                 o.getStatusHistory().stream().map(this::toHistoryDto).toList(),
                 o.getCreatedAt()
@@ -219,7 +219,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDto cancelOrder(UUID userId, UUID orderId) {
+    public OrderDto cancelOrder(UUID userId, UUID orderId, String reason) {
         Order order = orderRepo.findByIdAndUserIdWithDetail(orderId, userId)
                 .orElseThrow(() -> new AuthException(CustomCode.ORDER_NOT_FOUND));
 
@@ -245,8 +245,12 @@ public class OrderServiceImpl implements OrderService {
         hist.setOrder(order);
         hist.setFromStatus(prevStatus);
         hist.setToStatus(OrderStatus.CANCELLED);
-        hist.setNote("Khách hàng hủy đơn");
+        hist.setNote(reason != null && !reason.isBlank() ? "Khách hàng hủy đơn: " + reason : "Khách hàng hủy đơn");
         order.getStatusHistory().add(hist);
+        
+        if (reason != null && !reason.isBlank()) {
+            order.setCancelReason(reason);
+        }
 
         return toOrderDto(orderRepo.save(order));
     }

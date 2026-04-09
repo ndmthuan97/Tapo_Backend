@@ -83,6 +83,9 @@ public class Order extends BaseEntity {
     @Column(name = "staff_note", columnDefinition = "TEXT")
     private String staffNote;
 
+    @Column(name = "cancel_reason", length = 255)
+    private String cancelReason;
+
     // ===== Relationships =====
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

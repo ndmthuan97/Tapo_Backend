@@ -3,6 +3,7 @@ package backend.service;
 import backend.dto.product.ProductDto;
 import backend.dto.product.ProductRequest;
 import backend.dto.product.SimpleRefDto;
+import backend.dto.product.SuggestDto;
 import backend.model.enums.ProductStatus;
 import org.springframework.data.domain.Page;
 
@@ -19,6 +20,8 @@ public interface ProductService {
     ProductDto getProduct(UUID id);
 
     List<ProductDto> getRelatedProducts(UUID productId, int limit);
+
+    List<SuggestDto> suggestProducts(String query);
 
     ProductDto createProduct(ProductRequest request);
 

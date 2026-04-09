@@ -2,6 +2,8 @@ package backend.service.impl;
 
 import backend.dto.common.CustomCode;
 import backend.dto.review.AdminReviewDto;
+import backend.dto.review.BulkReviewActionRequest;
+import backend.dto.review.BulkReviewActionRequest.BulkAction;
 import backend.dto.review.CreateReviewRequest;
 import backend.dto.review.ReviewDto;
 import backend.exception.AuthException;
@@ -24,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -179,6 +183,32 @@ public class ReviewServiceImpl implements ReviewService {
         review.setAdminReply(reply != null && !reply.isBlank() ? reply.strip() : null);
         review.setRepliedAt(reply != null && !reply.isBlank() ? java.time.Instant.now() : null);
         return toAdminDto(reviewRepo.save(review));
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "product-detail", allEntries = true)
+    public List<UUID> bulkAction(List<UUID> reviewIds, BulkAction action) {
+        // java-pro: load all in one query → process in loop → single cache eviction
+        List<Review> reviews = reviewRepo.findAllById(reviewIds);
+        ReviewStatus targetStatus = action == BulkAction.APPROVE
+                ? ReviewStatus.APPROVED
+                : ReviewStatus.REJECTED;
+
+        List<UUID> processed = new ArrayList<>();
+        for (Review review : reviews) {
+            review.setStatus(targetStatus);
+            processed.add(review.getId());
+        }
+        reviewRepo.saveAll(reviews);
+
+        // Recalculate stats for each distinct product touched
+        reviews.stream()
+               .map(r -> r.getProduct().getId())
+               .distinct()
+               .forEach(this::recalculateProductStats);
+
+        return processed;
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

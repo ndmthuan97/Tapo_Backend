@@ -4,6 +4,7 @@ import backend.dto.common.ApiResponse;
 import backend.dto.product.ProductDto;
 import backend.dto.product.ProductRequest;
 import backend.dto.product.SimpleRefDto;
+import backend.dto.product.SuggestDto;
 import backend.model.enums.ProductStatus;
 import backend.service.ProductService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,6 +61,11 @@ public class ProductController {
             @RequestParam(defaultValue = "8") int limit
     ) {
         return ResponseEntity.ok(ApiResponse.success(productService.getRelatedProducts(id, limit)));
+    }
+
+    @GetMapping("/suggest")
+    public ResponseEntity<ApiResponse<List<SuggestDto>>> suggestProducts(@RequestParam String q) {
+        return ResponseEntity.ok(ApiResponse.success(productService.suggestProducts(q)));
     }
 
     /** Dropdown data for the create/edit form */

@@ -18,7 +18,7 @@ public interface OrderService {
 
     OrderDto getOrderDetail(UUID userId, UUID orderId);
 
-    OrderDto cancelOrder(UUID userId, UUID orderId);
+    OrderDto cancelOrder(UUID userId, UUID orderId, String reason);
 
     /** Admin: all orders */
     Page<OrderSummary> getAllOrders(int page, int size, OrderStatus status);
