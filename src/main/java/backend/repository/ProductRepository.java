@@ -23,6 +23,17 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     Optional<Product> findByIdAndDeletedFalse(UUID id);
 
     /**
+     * Find product by ID with gallery images eagerly loaded — prevents N+1 on detail page.
+     * java-pro: JOIN FETCH avoids Hibernate lazy-load round-trips.
+     */
+    @Query("""
+        SELECT p FROM Product p
+        LEFT JOIN FETCH p.images
+        WHERE p.id = :id AND p.deleted = false
+    """)
+    Optional<Product> findByIdWithImages(@Param("id") UUID id);
+
+    /**
      * Paginated search with full filter support:
      * keyword, status, categoryId, brandId, price range, minRating, inStock.
      */

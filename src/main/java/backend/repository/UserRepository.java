@@ -15,4 +15,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
     Page<User> findByRole(UserRole role, Pageable pageable);
+    /** Used by InventoryService to find a system-level ADMIN user for auto-receipts. */
+    Optional<User> findFirstByRoleOrderByCreatedAtAsc(UserRole role);
 }

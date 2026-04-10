@@ -54,7 +54,16 @@ public enum CustomCode {
     BLOG_NOT_FOUND(4028, 404, "Không tìm thấy bài viết"),
     PAYMENT_ALREADY_COMPLETED(4050, 400, "Đơn hàng này đã được thanh toán"),
     PAYMENT_FAILED(4051, 402, "Thanh toán thất bại"),
-    PAYMENT_NOT_FOUND(4052, 404, "Không tìm thấy thông tin thanh toán");
+    PAYMENT_NOT_FOUND(4052, 404, "Không tìm thấy thông tin thanh toán"),
+
+    CHAT_ROOM_NOT_FOUND(4060, 404, "Không tìm thấy phòng chat"),
+    CHAT_NOT_AUTHORIZED(4061, 403, "Bạn không có quyền truy cập phòng chat này"),
+    CHAT_ROOM_CLOSED(4062, 400, "Phòng chat đã đóng, không thể gửi tin nhắn"),
+
+    FLASH_SALE_NOT_FOUND(4070, 404, "Không tìm thấy flash sale"),
+    FLASH_SALE_CANNOT_MODIFY(4071, 400, "Chỉ có thể chỉnh sửa flash sale ở trạng thái SCHEDULED"),
+
+    INVENTORY_RECEIPT_NOT_FOUND(4080, 404, "Không tìm thấy phiếu kho");
 
 
     private final int code;

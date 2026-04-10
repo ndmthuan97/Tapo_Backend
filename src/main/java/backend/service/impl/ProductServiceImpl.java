@@ -57,10 +57,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    // java-pro: cache single product by ID -- TTL 5m (configured in RedisConfig)
+    // java-pro: JOIN FETCH images to prevent N+1 queries on product detail page
     @Cacheable(value = "product-detail", key = "#id")
     public ProductDto getProduct(UUID id) {
-        return toDto(findActiveProduct(id));
+        Product product = productRepository.findByIdWithImages(id)
+                .orElseThrow(() -> new AppException(CustomCode.PRODUCT_NOT_FOUND));
+        return toDto(product);
     }
 
     @Override

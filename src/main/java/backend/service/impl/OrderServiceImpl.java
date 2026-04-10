@@ -9,9 +9,12 @@ import backend.model.enums.OrderStatus;
 import backend.model.enums.PaymentStatus;
 import backend.repository.*;
 import backend.service.EmailService;
+import backend.service.InventoryService;
 import backend.service.NotificationService;
 import backend.service.OrderService;
 import backend.service.VoucherService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +43,11 @@ public class OrderServiceImpl implements OrderService {
     private final VoucherService voucherService;
     private final EmailService emailService;
     private final NotificationService notificationService;
+
+    // @Lazy prevents circular bean dependency: Order → Inventory → (no Order)
+    @Lazy
+    @Autowired
+    private InventoryService inventoryService;
 
     // ── Mapping helpers ─────────────────────────────────────────────────────────
 
@@ -283,6 +291,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(newStatus);
+
+        // java-pro: Auto-generate EXPORT receipt when order reaches DELIVERED
+        // Called before save() — order.getItems() is already loaded (eager in findByIdWithDetail)
+        if (newStatus == OrderStatus.DELIVERED && prev != OrderStatus.DELIVERED) {
+            inventoryService.autoExportOnDelivery(order);
+        }
 
         OrderStatusHistory hist = new OrderStatusHistory();
         hist.setOrder(order);
