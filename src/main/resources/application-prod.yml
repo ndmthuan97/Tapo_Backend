@@ -1,0 +1,84 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# application-prod.yml — Production Profile Overrides
+#
+# java-pro: This file ONLY overrides production-specific settings.
+# Base config (application.yml) still applies for everything else.
+#
+# Activated by: SPRING_PROFILES_ACTIVE=prod
+# ═══════════════════════════════════════════════════════════════════════════════
+
+spring:
+  # ── JPA: production uses validate (not update) ───────────────────────────────
+  # java-pro: NEVER use ddl-auto: update/create in production.
+  # Flyway handles schema migrations; Hibernate only validates.
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  # ── Redis: Upstash (TLS required) ────────────────────────────────────────────
+  data:
+    redis:
+      url: ${REDIS_URL}     # e.g. rediss://:<password>@<host>:6380
+      ssl:
+        enabled: true
+
+  # ── Mail: enforce TLS in production ─────────────────────────────────────────
+  mail:
+    properties:
+      mail:
+        smtp:
+          debug: false
+
+# ── Logging: production level (no DEBUG, JSON-friendly) ────────────────────────
+# java-pro: Structured logging critical for log aggregation (Railway/Kubernetes)
+logging:
+  level:
+    backend: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
+    org.springframework.security: WARN
+    org.springframework.security.oauth2: WARN
+    org.springframework.web: WARN
+  pattern:
+    # Production: no ANSI colors, include trace ID for distributed tracing
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId:-no-trace}] %-5level %logger{36} - %msg%n"
+  file:
+    name: /app/logs/app.log   # Docker container path
+
+# ── Actuator: expose minimal endpoints in production ───────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never   # Never expose DB/Redis credentials in health response
+  info:
+    env:
+      enabled: false
+
+# ── Server: optimize for production ──────────────────────────────────────────
+server:
+  port: ${SERVER_PORT:8080}
+  # java-pro: Tomcat compression for API responses (JSON compresses very well)
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain
+    min-response-size: 1024
+  # Increase header buffer for JWT tokens (default 8KB may be too small)
+  tomcat:
+    max-http-response-header-size: 16384
+    connection-timeout: 20000
+    threads:
+      max: 200
+      min-spare: 10
+
+# ── App: production URLs ──────────────────────────────────────────────────────
+app:
+  base-url: ${APP_BASE_URL}           # e.g. https://tapo-store.vercel.app
+  keep-alive:
+    enabled: ${KEEP_ALIVE_ENABLED:false}
+    url: ${KEEP_ALIVE_URL:http://localhost:${SERVER_PORT:8080}/actuator/health}

@@ -95,6 +95,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public ProductDto createProduct(ProductRequest request) {
         Category category = findCategory(request.categoryId());
         Brand brand       = findBrand(request.brandId());
@@ -161,6 +162,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products",       allEntries = true),
+        @CacheEvict(value = "product-suggest", allEntries = true)
+    })
     public void bulkDelete(Set<UUID> ids) {
         // Fetch only existing products to avoid exceptions for missing IDs (idempotent)
         List<Product> targets = productRepository.findAllById(ids);
@@ -170,6 +175,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products",       allEntries = true),
+        @CacheEvict(value = "product-detail", allEntries = true)
+    })
     public void bulkUpdateStatus(Set<UUID> ids, ProductStatus status) {
         List<Product> targets = productRepository.findAllById(ids);
         targets.forEach(p -> p.setStatus(status));

@@ -99,6 +99,13 @@ server:
   forward-headers-strategy: framework
   servlet:
     context-path: /
+  # Trust reverse proxy headers only from Docker internal CIDR (Nginx container)
+  # Prevents X-Forwarded-For spoofing from external clients
+  tomcat:
+    remoteip:
+      internal-proxies: "172\\.\\d+\\.\\d+\\.\\d+|10\\.\\d+\\.\\d+\\.\\d+|127\\.0\\.0\\.1"
+      remote-ip-header: X-Forwarded-For
+      protocol-header: X-Forwarded-Proto
 
 # ===== JWT =====
 jwt:

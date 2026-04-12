@@ -118,12 +118,20 @@ public class RedisConfig implements CachingConfigurer {
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(base)
                 .withInitialCacheConfigurations(Map.of(
-                        "dashboard",      base.entryTtl(Duration.ofMinutes(5)),
-                        "products",       base.entryTtl(Duration.ofMinutes(2)),
-                        "topProducts",    base.entryTtl(Duration.ofMinutes(10)),
-                        // Sprint 2: expanded cache configs
-                        "product-detail", base.entryTtl(Duration.ofMinutes(5)),
-                        "metadata",       base.entryTtl(Duration.ofMinutes(30))
+                        // Dashboard stats — recomputed on schedule (5min TTL)
+                        "dashboard",       base.entryTtl(Duration.ofMinutes(5)),
+                        // Product list (paginated + filtered) — invalidated on any product write
+                        "products",        base.entryTtl(Duration.ofMinutes(2)),
+                        // Product detail — invalidated on update/delete
+                        "product-detail",  base.entryTtl(Duration.ofMinutes(5)),
+                        // Autocomplete search — short TTL (frequent queries, fast staleness OK)
+                        "product-suggest", base.entryTtl(Duration.ofMinutes(1)),
+                        // Top products aggregate — invalidated when dashboards evict
+                        "topProducts",     base.entryTtl(Duration.ofMinutes(10)),
+                        // Categories + brands (admin + shop) — invalidated on any CRUD write
+                        "metadata",        base.entryTtl(Duration.ofMinutes(30)),
+                        // Flash sale public list — short TTL (scheduler changes status every 60s)
+                        "flash-sales",     base.entryTtl(Duration.ofMinutes(1))
                 ))
                 .build();
     }

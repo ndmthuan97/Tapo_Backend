@@ -1,0 +1,175 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# .github/workflows/test-build-push-docker.yml  (repo: ndmthuan97/Tapo_Backend)
+#
+# CI/CD Pipeline: Test → Build JAR → Build & Push tapo-api → GHCR
+#
+# Image: ghcr.io/ndmthuan97/tapo-api
+#
+# Tags được tạo tự động:
+#   latest       — push vào main
+#   main         — branch main
+#   develop      — branch develop
+#   v1.2.3       — khi tạo git tag "v1.2.3"
+#   sha-a1b2c3d  — commit SHA ngắn (dùng rollback)
+#
+# Pull về dùng:
+#   docker pull ghcr.io/ndmthuan97/tapo-api:latest
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Secrets: Không cần thêm — GITHUB_TOKEN mặc định đủ quyền write:packages
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: "Test → Build → Push Docker"
+
+on:
+  push:
+    branches: [main, develop]
+    tags:
+      - 'v*.*.*'       # vd: v1.0.0 → các tag semver
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY:   ghcr.io
+  IMAGE_NAME: ndmthuan97/tapo-api    # hardcode vì image name ≠ repo name
+
+# ──────────────────────────────────────────────────────────────────────────────
+jobs:
+
+  # ── 1. Unit Tests ─────────────────────────────────────────────────────────
+  test:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run unit tests
+        # java-pro: BackendApplicationTests bị skip — cần live DB + Redis
+        run: ./mvnw test -Dtest="!BackendApplicationTests" --batch-mode -q
+
+      - name: Upload surefire report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  # ── 2. Build JAR ──────────────────────────────────────────────────────────
+  build-jar:
+    name: 📦 Build JAR
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build JAR
+        run: ./mvnw clean package -DskipTests --batch-mode -q
+
+      - name: Rename JAR thành tên cố định
+        run: mv target/tapo-backend-*.jar target/app.jar
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/app.jar
+          retention-days: 1
+
+  # ── 3. Build & Push Docker Image → GHCR ───────────────────────────────────
+  push-image:
+    name: "🐳 Push tapo-api → GHCR"
+    runs-on: ubuntu-latest
+    needs: build-jar
+    if: github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target/
+
+      - name: "Set up QEMU (arm64 support — Mac M-series)"
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Docker tags & labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.title=tapo-api
+            org.opencontainers.image.description=Tapo E-Commerce Backend (Spring Boot 21)
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.licenses=MIT
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,format=short
+
+      - name: "Build & push (linux/amd64 + linux/arm64)"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags:   ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+
+      - name: Summary
+        run: |
+          {
+            echo "### Docker image pushed"
+            echo ""
+            echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\`"
+            echo ""
+            echo "**Tags:**"
+            printf '```\n'
+            echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n'
+            printf '```\n'
+            echo ""
+            echo "**Pull:**"
+            printf '```bash\n'
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            printf '```\n'
+          } >> "$GITHUB_STEP_SUMMARY"

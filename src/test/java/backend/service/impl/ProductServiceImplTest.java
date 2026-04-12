@@ -43,7 +43,8 @@ class ProductServiceImplTest {
     void getProduct_found_returnsDto() {
         UUID      id      = UUID.randomUUID();
         Product   product = stubProduct(id);
-        given(productRepository.findByIdAndDeletedFalse(id)).willReturn(Optional.of(product));
+        // java-pro: uses findByIdWithImages (JOIN FETCH) instead of findByIdAndDeletedFalse
+        given(productRepository.findByIdWithImages(id)).willReturn(Optional.of(product));
 
         var dto = productService.getProduct(id);
 
@@ -56,7 +57,7 @@ class ProductServiceImplTest {
     @DisplayName("getProduct: product not found → throws PRODUCT_NOT_FOUND")
     void getProduct_notFound_throwsAppException() {
         UUID id = UUID.randomUUID();
-        given(productRepository.findByIdAndDeletedFalse(id)).willReturn(Optional.empty());
+        given(productRepository.findByIdWithImages(id)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.getProduct(id))
                 .isInstanceOf(AppException.class)

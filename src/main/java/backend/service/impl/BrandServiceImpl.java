@@ -5,16 +5,30 @@ import backend.dto.brand.BrandRequest;
 import backend.dto.common.CustomCode;
 import backend.exception.AppException;
 import backend.model.entity.Brand;
+import backend.model.enums.CatalogStatus;
 import backend.repository.BrandRepository;
 import backend.service.BrandService;
 import backend.util.SlugUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * BrandService implementation with Spring Cache integration.
+ *
+ * <p>java-pro: Cache strategy:
+ * <ul>
+ *   <li>{@code metadata::all-brands} — full list for admin (no status filter), TTL 30 min</li>
+ *   <li>{@code metadata::brands} — active-only, used by ProductService filter dropdown, TTL 30 min</li>
+ * </ul>
+ * Write operations use {@code allEntries = true} to evict the entire "metadata" region,
+ * keeping category and brand caches consistent in one operation.
+ */
 @Service
 @RequiredArgsConstructor
 public class BrandServiceImpl implements BrandService {
@@ -23,6 +37,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "metadata", key = "'all-brands'")
     public List<BrandDto> getAllBrands() {
         return brandRepository.findAll().stream().map(this::toDto).toList();
     }
@@ -35,6 +50,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "metadata", allEntries = true)
     public BrandDto createBrand(BrandRequest request) {
         String slug = resolveSlug(request.slug(), request.name(), null);
 
@@ -42,13 +58,14 @@ public class BrandServiceImpl implements BrandService {
         brand.setName(request.name());
         brand.setSlug(slug);
         brand.setLogoUrl(request.logoUrl());
-        brand.setStatus(request.status() != null ? request.status() : backend.model.enums.CatalogStatus.ACTIVE);
+        brand.setStatus(request.status() != null ? request.status() : CatalogStatus.ACTIVE);
 
         return toDto(brandRepository.save(brand));
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "metadata", allEntries = true)
     public BrandDto updateBrand(UUID id, BrandRequest request) {
         Brand brand = findById(id);
         String slug = resolveSlug(request.slug(), request.name(), id);
@@ -63,6 +80,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "metadata", allEntries = true)
     public void deleteBrand(UUID id) {
         if (!brandRepository.existsById(id)) throw new AppException(CustomCode.BRAND_NOT_FOUND);
         brandRepository.deleteById(id);

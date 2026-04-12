@@ -5,16 +5,29 @@ import backend.dto.category.CategoryRequest;
 import backend.dto.common.CustomCode;
 import backend.exception.AppException;
 import backend.model.entity.Category;
+import backend.model.enums.CatalogStatus;
 import backend.repository.CategoryRepository;
 import backend.service.CategoryService;
 import backend.util.SlugUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * CategoryService implementation with Spring Cache integration.
+ *
+ * <p>java-pro: Cache strategy:
+ * <ul>
+ *   <li>{@code metadata::all-categories} — full list for admin CRUD (no filter), TTL 30 min</li>
+ *   <li>{@code metadata::categories} — active-only list used on product filter/shop, TTL 30 min</li>
+ * </ul>
+ * Write operations evict both keys to keep data consistent.
+ */
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
@@ -23,6 +36,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    // java-pro: Cache full list (admin) separately from active-only list (shop/product filter)
+    @Cacheable(value = "metadata", key = "'all-categories'")
     public List<CategoryDto> getAllCategories() {
         return categoryRepository.findAll().stream().map(this::toDto).toList();
     }
@@ -35,6 +50,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    // Evict both cache keys: admin list + active-only list (used in ProductService)
+    @CacheEvict(value = "metadata", allEntries = true)
     public CategoryDto createCategory(CategoryRequest request) {
         String slug = resolveSlug(request.slug(), request.name(), null);
 
@@ -44,13 +61,14 @@ public class CategoryServiceImpl implements CategoryService {
         category.setDescription(request.description());
         category.setImageUrl(request.imageUrl());
         category.setSortOrder(request.sortOrder() != null ? request.sortOrder() : 0);
-        category.setStatus(request.status() != null ? request.status() : backend.model.enums.CatalogStatus.ACTIVE);
+        category.setStatus(request.status() != null ? request.status() : CatalogStatus.ACTIVE);
 
         return toDto(categoryRepository.save(category));
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "metadata", allEntries = true)
     public CategoryDto updateCategory(UUID id, CategoryRequest request) {
         Category category = findById(id);
         String slug = resolveSlug(request.slug(), request.name(), id);
@@ -60,13 +78,14 @@ public class CategoryServiceImpl implements CategoryService {
         category.setDescription(request.description());
         category.setImageUrl(request.imageUrl());
         if (request.sortOrder() != null) category.setSortOrder(request.sortOrder());
-        if (request.status() != null) category.setStatus(request.status());
+        if (request.status() != null)    category.setStatus(request.status());
 
         return toDto(categoryRepository.save(category));
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "metadata", allEntries = true)
     public void deleteCategory(UUID id) {
         if (!categoryRepository.existsById(id)) throw new AppException(CustomCode.CATEGORY_NOT_FOUND);
         categoryRepository.deleteById(id);

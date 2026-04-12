@@ -2,16 +2,48 @@
 # Frontend deploy trên Vercel — không cần container.
 #
 # Usage (chạy từ thư mục Tapo_Backend/):
-#   Chạy cơ bản (backend + redis):
+#   Chạy cơ bản (nginx + backend + redis):
 #     docker compose up -d
 #
 #   Chạy kèm RabbitMQ:
 #     docker compose --profile rabbit up -d
 #
-#   Build lại image:
+#   Build lại image backend:
 #     docker compose build --no-cache backend
+#
+#   Xem logs Nginx:
+#     docker compose logs nginx -f
+#
+# Architecture:
+#   Internet → Nginx (:80) → tapo-backend (:8080) → Redis (:6379)
+#   Backend KHÔNG expose port ra ngoài — chỉ Nginx public
 
 services:
+
+  # ── Nginx (Reverse Proxy) ──────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: tapo-nginx
+    ports:
+      - "80:80"
+      # Uncomment khi có SSL cert (Let's Encrypt / Cloudflare):
+      # - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Uncomment khi có SSL cert:
+      # - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - tapo-net
 
   # ── Backend (Spring Boot) ──────────────────────────────────────────────────
   backend:
@@ -23,12 +55,16 @@ services:
       - .env
     environment:
       SERVER_PORT: "8080"
-      SPRING_PROFILES_ACTIVE: "${SPRING_PROFILES_ACTIVE:-default}"
+      SPRING_PROFILES_ACTIVE: "${SPRING_PROFILES_ACTIVE:-prod}"
       # Redis — trỏ vào container redis bên dưới
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-    ports:
-      - "8080:8080"
+    # KHÔNG expose port 8080 ra ngoài — chỉ Nginx mới truy cập được
+    # Uncomment dòng dưới nếu cần debug trực tiếp (không dùng trong production):
+    # ports:
+    #   - "8080:8080"
+    expose:
+      - "8080"
     depends_on:
       redis:
         condition: service_healthy
@@ -52,8 +88,9 @@ services:
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru
       --save 60 1
-    ports:
-      - "6379:6379"
+    # KHÔNG expose port ra ngoài — chỉ backend truy cập trong internal network
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
     healthcheck:

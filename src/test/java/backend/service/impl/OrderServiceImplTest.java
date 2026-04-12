@@ -9,8 +9,10 @@ import backend.model.enums.OrderStatus;
 import backend.model.enums.PaymentStatus;
 import backend.repository.*;
 import backend.service.EmailService;
+import backend.service.InventoryService;
 import backend.service.NotificationService;
 import backend.service.VoucherService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +20,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,6 +30,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OrderServiceImpl — Unit Tests")
@@ -41,8 +45,16 @@ class OrderServiceImplTest {
     @Mock VoucherService     voucherService;
     @Mock EmailService       emailService;
     @Mock NotificationService notificationService;
+    @Mock InventoryService    inventoryService;
 
     @InjectMocks OrderServiceImpl orderService;
+
+    @BeforeEach
+    void setUp() {
+        // java-pro: @Lazy @Autowired fields are not injected by Mockito's @InjectMocks
+        // — inject manually via ReflectionTestUtils
+        ReflectionTestUtils.setField(orderService, "inventoryService", inventoryService);
+    }
 
     // ── createOrder ───────────────────────────────────────────────────────────
 
@@ -163,6 +175,42 @@ class OrderServiceImplTest {
                 .hasMessageContaining(CustomCode.ORDER_CANNOT_CANCEL.getDefaultMessage());
     }
 
+    // ── updateOrderStatus ─────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("updateOrderStatus: DELIVERED → autoExportOnDelivery called once")
+    void updateOrderStatus_delivered_triggersAutoExport() {
+        UUID orderId = UUID.randomUUID();
+        Order order  = stubOrder(UUID.randomUUID());
+        order.setStatus(OrderStatus.SHIPPING); // prev status
+
+        given(orderRepo.findByIdWithDetail(orderId)).willReturn(Optional.of(order));
+        given(orderRepo.save(any())).willReturn(order);
+        willDoNothing().given(notificationService).notifyUserOrderStatusChanged(any(), anyString(), anyString());
+        // java-pro: autoExportOnDelivery must be called exactly once
+        willDoNothing().given(inventoryService).autoExportOnDelivery(any(Order.class));
+
+        orderService.updateOrderStatus(orderId, OrderStatus.DELIVERED, "Giao thành công");
+
+        then(inventoryService).should(times(1)).autoExportOnDelivery(any(Order.class));
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: non-DELIVERED status → autoExportOnDelivery NOT called")
+    void updateOrderStatus_nonDelivered_doesNotTriggerExport() {
+        UUID orderId = UUID.randomUUID();
+        Order order  = stubOrder(UUID.randomUUID());
+        order.setStatus(OrderStatus.CONFIRMED);
+
+        given(orderRepo.findByIdWithDetail(orderId)).willReturn(Optional.of(order));
+        given(orderRepo.save(any())).willReturn(order);
+        willDoNothing().given(notificationService).notifyUserOrderStatusChanged(any(), anyString(), anyString());
+
+        orderService.updateOrderStatus(orderId, OrderStatus.SHIPPING, "Đang giao");
+
+        then(inventoryService).shouldHaveNoInteractions();
+    }
+
     // ── Test fixtures ─────────────────────────────────────────────────────────
 
     private Product stubProduct(int stock) {
@@ -212,6 +260,8 @@ class OrderServiceImplTest {
         o.setPaymentMethod("COD");
         o.setShippingRecipientName("Nguyen Van A");
         o.setShippingPhone("0912345678");
+        // java-pro: inject user so notifyUserOrderStatusChanged doesn't NPE on getUser().getId()
+        o.setUser(stubUser(userId));
         return o;
     }
 

@@ -12,6 +12,8 @@ import backend.repository.ProductRepository;
 import backend.service.FlashSaleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,7 @@ public class FlashSaleServiceImpl implements FlashSaleService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "flash-sales", allEntries = true)
     public FlashSaleDto createFlashSale(FlashSaleRequest request) {
         validateTimeRange(request.startTime(), request.endTime());
 
@@ -60,6 +63,7 @@ public class FlashSaleServiceImpl implements FlashSaleService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "flash-sales", allEntries = true)
     public FlashSaleDto updateFlashSale(UUID id, FlashSaleRequest request) {
         FlashSale fs = findFlashSale(id);
 
@@ -82,6 +86,7 @@ public class FlashSaleServiceImpl implements FlashSaleService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "flash-sales", allEntries = true)
     public void deleteFlashSale(UUID id) {
         FlashSale fs = findFlashSale(id);
         if (fs.getStatus() != FlashSaleStatus.SCHEDULED) {
@@ -103,6 +108,8 @@ public class FlashSaleServiceImpl implements FlashSaleService {
 
     @Override
     @Transactional(readOnly = true)
+    // java-pro: active sales polled frequently by FlashSaleBanner — 1min TTL per RedisConfig
+    @Cacheable(value = "flash-sales", key = "'active'")
     public List<FlashSaleDto> getActiveSales() {
         return flashSaleRepo.findActiveNow(Instant.now())
                 .stream()
@@ -119,6 +126,7 @@ public class FlashSaleServiceImpl implements FlashSaleService {
     @Override
     @Scheduled(fixedDelay = 60_000)
     @Transactional
+    @CacheEvict(value = "flash-sales", allEntries = true)   // evict after status transitions
     public void processFlashSaleSchedule() {
         Instant now = Instant.now();
 
