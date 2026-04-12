@@ -1,0 +1,85 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# .github/workflows/deploy-to-azure.yml  (repo: ndmthuan97/Tapo_Backend)
+#
+# Deploy tapo-api container từ GHCR → Azure App Service (Linux Container)
+#
+# Trigger: Chạy SAU KHI test-build-push-docker.yml hoàn thành trên main
+#          (không build lại — dùng image đã có trên GHCR)
+#
+# Flow:
+#   test-build-push-docker.yml push image → ghcr.io/ndmthuan97/tapo-api:latest
+#                                                       ↓
+#   deploy-to-azure.yml trigger → Azure App Service pull image mới → restart
+#
+# Secrets cần thêm vào GitHub (Settings → Secrets → Actions):
+#   AZURE_WEBAPP_PUBLISH_PROFILE  — Publish Profile XML từ Azure Portal
+#                                   (App Service → Get publish profile)
+#
+# One-time Azure setup: xem hướng dẫn trong file DEPLOY-AZURE-CONTAINER.md
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: "Deploy → Azure (Container)"
+
+on:
+  # Tự động chạy sau khi CI pipeline push image thành công
+  workflow_run:
+    workflows: ["Test → Build → Push Docker"]
+    types: [completed]
+    branches: [main]
+
+  # Cho phép trigger thủ công từ GitHub UI (roll forward/back)
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag để deploy (mặc định: latest)"
+        required: false
+        default: "latest"
+
+env:
+  AZURE_WEBAPP_NAME: tapo-api
+  REGISTRY:          ghcr.io
+  IMAGE_NAME:        ndmthuan97/tapo-api
+
+jobs:
+  deploy:
+    name: "🚀 Deploy Container → Azure"
+    runs-on: ubuntu-latest
+    # Chỉ deploy khi CI workflow thành công (không deploy khi test fail)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    environment:
+      name: production
+      url: https://tapo-api.azurewebsites.net
+
+    steps:
+      - name: Resolve image tag
+        id: tag
+        run: |
+          # workflow_dispatch: dùng tag người dùng nhập
+          # workflow_run (auto): luôn dùng latest
+          TAG="${{ github.event.inputs.image_tag || 'latest' }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy container to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name:        ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          # Chỉ cần truyền image — Azure tự pull từ GHCR bằng credentials đã config
+          images: ${{ steps.tag.outputs.image }}
+
+      - name: Summary
+        run: |
+          {
+            echo "### Deployed to Azure App Service"
+            echo ""
+            echo "| | |"
+            echo "|--|--|"
+            echo "| **App** | \`${{ env.AZURE_WEBAPP_NAME }}\` |"
+            echo "| **Image** | \`${{ steps.tag.outputs.image }}\` |"
+            echo "| **Commit** | \`${{ github.sha || github.event.workflow_run.head_sha }}\` |"
+            echo "| **URL** | https://tapo-api.azurewebsites.net |"
+          } >> "$GITHUB_STEP_SUMMARY"
