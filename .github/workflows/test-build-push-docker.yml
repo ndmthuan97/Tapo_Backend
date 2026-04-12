@@ -54,7 +54,9 @@ jobs:
 
       - name: Run unit tests
         # java-pro: BackendApplicationTests bị skip — cần live DB + Redis
-        run: ./mvnw test -Dtest="!BackendApplicationTests" --batch-mode -q
+        run: |
+          chmod +x mvnw
+          ./mvnw test -Dtest="!BackendApplicationTests" --batch-mode -q
 
       - name: Upload surefire report
         uses: actions/upload-artifact@v4
@@ -82,7 +84,9 @@ jobs:
           cache: 'maven'
 
       - name: Build JAR
-        run: ./mvnw clean package -DskipTests --batch-mode -q
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests --batch-mode -q
 
       - name: Rename JAR thành tên cố định
         run: mv target/tapo-backend-*.jar target/app.jar
