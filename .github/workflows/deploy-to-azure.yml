@@ -36,7 +36,7 @@ on:
         default: "latest"
 
 env:
-  AZURE_WEBAPP_NAME: tapo-api
+  AZURE_WEBAPP_NAME: tapo-be
   REGISTRY:          ghcr.io
   IMAGE_NAME:        ndmthuan97/tapo-api
 
