@@ -43,8 +43,8 @@ logging:
   pattern:
     # Production: no ANSI colors, include trace ID for distributed tracing
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId:-no-trace}] %-5level %logger{36} - %msg%n"
-  file:
-    name: /app/logs/app.log   # Docker container path
+  # NOTE: No file logging — Azure App Service captures stdout automatically
+  # View logs: Azure Portal → tapo-be → Log stream
 
 # ── Actuator: expose minimal endpoints in production ───────────────────────────
 management:
