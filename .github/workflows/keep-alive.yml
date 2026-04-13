@@ -1,0 +1,34 @@
+name: Keep Alive – Azure Backend
+
+on:
+  schedule:
+    # Ping every 10 minutes — sweet spot:
+    # - Azure F1 idles at ~20 min → 10-min buffer is safe
+    # - If 1 ping fails → next runs 20 min from last success → still within limit
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping:
+    name: Ping Azure Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Ping health endpoint
+        run: |
+          echo "Pinging Azure backend at $(date)..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 15 \
+            --retry 2 \
+            --retry-delay 3 \
+            "${{ secrets.AZURE_BACKEND_URL }}/actuator/health")
+
+          echo "Response status: $STATUS"
+
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+            echo "✅ Backend is alive (HTTP $STATUS)"
+          else
+            echo "⚠️ Backend returned unexpected status: $STATUS"
+            # Don't fail the workflow — Azure might just be waking up
+          fi
