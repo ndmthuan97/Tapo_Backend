@@ -15,20 +15,37 @@ jobs:
     timeout-minutes: 2
 
     steps:
+      - name: Validate secret
+        run: |
+          if [ -z "${{ secrets.AZURE_BACKEND_URL }}" ]; then
+            echo "❌ ERROR: AZURE_BACKEND_URL secret is not set."
+            echo "   → Go to: Settings → Secrets and variables → Actions → New repository secret"
+            echo "   → Name: AZURE_BACKEND_URL"
+            echo "   → Value: https://<your-app>.azurewebsites.net"
+            exit 1
+          fi
+          echo "✅ Secret is configured."
+
       - name: Ping health endpoint
         run: |
+          TARGET="${{ secrets.AZURE_BACKEND_URL }}/actuator/health"
           echo "Pinging Azure backend at $(date)..."
+          echo "Target: $TARGET"
+
+          # || true prevents bash -e from failing the step on curl error
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             --max-time 15 \
             --retry 2 \
             --retry-delay 3 \
-            "${{ secrets.AZURE_BACKEND_URL }}/actuator/health")
+            "$TARGET") || STATUS="000"
 
           echo "Response status: $STATUS"
 
           if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
             echo "✅ Backend is alive (HTTP $STATUS)"
+          elif [ "$STATUS" = "000" ]; then
+            echo "⚠️ curl failed (timeout or network error) — Azure might be waking up"
           else
             echo "⚠️ Backend returned unexpected status: $STATUS"
-            # Don't fail the workflow — Azure might just be waking up
           fi
+          # Never fail — keep-alive should not block or alert unnecessarily
