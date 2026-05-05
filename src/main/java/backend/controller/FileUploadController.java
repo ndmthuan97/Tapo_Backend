@@ -11,11 +11,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
 @Tag(name = "File Upload", description = "API cho việc upload hình ảnh lên Supabase Storage")
 public class FileUploadController {
+
+    private static final Set<String> ALLOWED_PATHS =
+            Set.of("general", "products", "banners", "avatars", "reviews");
 
     private final FileStorageService fileStorageService;
 
@@ -26,8 +31,12 @@ public class FileUploadController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "path", required = false, defaultValue = "general") String path
     ) {
+        if (!ALLOWED_PATHS.contains(path)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, "Đường dẫn không hợp lệ. Cho phép: " + ALLOWED_PATHS));
+        }
         String url = fileStorageService.uploadFile(file, path);
-        return ResponseEntity.ok(ApiResponse.success(url, "Upload file thành công"));
+        return ResponseEntity.ok(ApiResponse.success("Upload file thành công", url));
     }
 
     @DeleteMapping("/delete")
