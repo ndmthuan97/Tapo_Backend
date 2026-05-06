@@ -7,6 +7,7 @@ import backend.model.enums.UserStatus;
 import backend.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,18 @@ public class DataSeederConfig {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PlatformTransactionManager transactionManager;
+
+    @Value("${SEED_ADMIN_PASSWORD:Admin@123}")
+    private String adminPassword;
+
+    @Value("${SEED_SALES_PASSWORD:Sales@123}")
+    private String salesPassword;
+
+    @Value("${SEED_WAREHOUSE_PASSWORD:Warehouse@123}")
+    private String warehousePassword;
+
+    @Value("${SEED_CUSTOMER_PASSWORD:Customer@123}")
+    private String customerPassword;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -49,10 +62,10 @@ public class DataSeederConfig {
             }
 
             // Seed từng user theo email — idempotent: chỉ tạo nếu chưa tồn tại
-            seedUserIfAbsent("admin@tapo.vn",       "Admin@123",     "Quản Trị Viên",     "0900000001", UserRole.ADMIN);
-            seedUserIfAbsent("sales@tapo.vn",        "Sales@123",     "Nhân Viên Bán Hàng","0900000002", UserRole.SALES_STAFF);
-            seedUserIfAbsent("warehouse@tapo.vn",    "Warehouse@123", "Nhân Viên Kho",     "0900000003", UserRole.WAREHOUSE_STAFF);
-            seedUserIfAbsent("customer@tapo.vn",     "Customer@123",  "Khách Hàng Mẫu",   "0900000004", UserRole.CUSTOMER);
+            seedUserIfAbsent("admin@tapo.vn",       adminPassword,     "Quản Trị Viên",     "0900000001", UserRole.ADMIN);
+            seedUserIfAbsent("sales@tapo.vn",        salesPassword,     "Nhân Viên Bán Hàng","0900000002", UserRole.SALES_STAFF);
+            seedUserIfAbsent("warehouse@tapo.vn",    warehousePassword, "Nhân Viên Kho",     "0900000003", UserRole.WAREHOUSE_STAFF);
+            seedUserIfAbsent("customer@tapo.vn",     customerPassword,  "Khách Hàng Mẫu",   "0900000004", UserRole.CUSTOMER);
 
             log.info("Seed check completed.");
         };
