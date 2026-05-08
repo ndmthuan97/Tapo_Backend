@@ -194,7 +194,7 @@ public class ProductServiceImpl implements ProductService {
     public List<SimpleRefDto> getAllCategories() {
         return categoryRepository.findAllByStatusOrderBySortOrderAsc(backend.model.enums.CatalogStatus.ACTIVE)
                 .stream()
-                .map(c -> new SimpleRefDto(c.getId(), c.getName()))
+                .map(c -> new SimpleRefDto(c.getId(), c.getName(), c.getSlug()))
                 .toList();
     }
 
@@ -204,7 +204,7 @@ public class ProductServiceImpl implements ProductService {
     public List<SimpleRefDto> getAllBrands() {
         return brandRepository.findAllByStatusOrderByNameAsc(backend.model.enums.CatalogStatus.ACTIVE)
                 .stream()
-                .map(b -> new SimpleRefDto(b.getId(), b.getName()))
+                .map(b -> new SimpleRefDto(b.getId(), b.getName(), b.getSlug()))
                 .toList();
     }
 
