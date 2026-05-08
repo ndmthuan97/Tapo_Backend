@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -76,10 +77,8 @@ class BlogControllerTest {
         @Test
         @DisplayName("BLOG-001: xem danh sách bài viết → 200, chỉ published, default page=9")
         void getPosts_default_200() throws Exception {
-            Page<BlogPostDto> page = new PageImpl<>(List.of(
-                    stubPost("bai-viet-1", true),
-                    stubPost("bai-viet-2", true)
-            ));
+            var items = List.of(stubPost("bai-viet-1", true), stubPost("bai-viet-2", true));
+            Page<BlogPostDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(blogService.getPosts(isNull(), any())).willReturn(page);
 
             mockMvc.perform(get("/api/blog"))
@@ -91,7 +90,8 @@ class BlogControllerTest {
         @Test
         @DisplayName("BLOG-002: lọc theo category slug → 200, đúng category")
         void getPosts_filterByCategory_200() throws Exception {
-            Page<BlogPostDto> page = new PageImpl<>(List.of(stubPost("tin-1", true)));
+            var items = List.of(stubPost("tin-1", true));
+            Page<BlogPostDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(blogService.getPosts(eq("tin-tuc"), any())).willReturn(page);
 
             mockMvc.perform(get("/api/blog").param("categorySlug", "tin-tuc"))

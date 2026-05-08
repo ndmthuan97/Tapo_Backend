@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -159,10 +160,11 @@ class ReviewControllerTest {
         @DisplayName("REVIEW-007: xem reviews sản phẩm → 200, chỉ review APPROVED")
         void getProductReviews_200() throws Exception {
             UUID productId = UUID.randomUUID();
-            Page<ReviewDto> page = new PageImpl<>(List.of(
+            var items = List.of(
                     stubReviewDto(UUID.randomUUID(), 5),
                     stubReviewDto(UUID.randomUUID(), 4)
-            ));
+            );
+            Page<ReviewDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(reviewService.getProductReviews(eq(productId), any())).willReturn(page);
 
             mockMvc.perform(get("/api/products/{productId}/reviews", productId))
@@ -177,7 +179,7 @@ class ReviewControllerTest {
             UUID productId = UUID.randomUUID();
             // Service filters out PENDING — returns empty
             given(reviewService.getProductReviews(eq(productId), any()))
-                    .willReturn(new PageImpl<>(Collections.emptyList()));
+                    .willReturn(new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0));
 
             mockMvc.perform(get("/api/products/{productId}/reviews", productId))
                     .andExpect(status().isOk())

@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -100,10 +101,8 @@ class InventoryControllerTest {
         @Test
         @DisplayName("INV-003: xem danh sách phiếu kho → 200, phân trang")
         void listReceipts_200() throws Exception {
-            Page<InventoryReceiptDto> page = new PageImpl<>(List.of(
-                    stubReceipt(ReceiptType.IMPORT),
-                    stubReceipt(ReceiptType.EXPORT)
-            ));
+            var items = List.of(stubReceipt(ReceiptType.IMPORT), stubReceipt(ReceiptType.EXPORT));
+            Page<InventoryReceiptDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(inventoryService.listReceipts(isNull(), anyInt(), anyInt())).willReturn(page);
 
             mockMvc.perform(get("/api/admin/inventory"))
@@ -115,7 +114,8 @@ class InventoryControllerTest {
         @Test
         @DisplayName("INV-003b: lọc theo type=IMPORT → 200")
         void listReceipts_filterByType_200() throws Exception {
-            Page<InventoryReceiptDto> page = new PageImpl<>(List.of(stubReceipt(ReceiptType.IMPORT)));
+            var items = List.of(stubReceipt(ReceiptType.IMPORT));
+            Page<InventoryReceiptDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(inventoryService.listReceipts(eq(ReceiptType.IMPORT), anyInt(), anyInt())).willReturn(page);
 
             mockMvc.perform(get("/api/admin/inventory").param("type", "IMPORT"))

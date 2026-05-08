@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -194,10 +195,8 @@ class ContactControllerTest {
         @Test
         @DisplayName("CONTACT admin list → 200, tất cả messages phân trang")
         void getAllMessages_200() throws Exception {
-            Page<ContactMessageDto> page = new PageImpl<>(List.of(
-                    stubContactDto(false),
-                    stubContactDto(true)
-            ));
+            var items = List.of(stubContactDto(false), stubContactDto(true));
+            Page<ContactMessageDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(contactService.listAll(anyInt(), anyInt(), anyBoolean())).willReturn(page);
 
             mockMvc.perform(get("/api/admin/contact"))

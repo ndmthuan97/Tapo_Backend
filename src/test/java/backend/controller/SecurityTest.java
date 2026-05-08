@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -59,7 +60,7 @@ class SecurityTest {
             // getProducts(page, size, search, status, categoryId, brandId, minPrice, maxPrice, minRating, inStock, sort)
             given(productService.getProducts(anyInt(), anyInt(), eq("'; DROP TABLE products--"),
                     any(), isNull(), isNull(), isNull(), isNull(), isNull(), any(), anyString()))
-                    .willReturn(new PageImpl<>(List.of()));
+                    .willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
 
             mockMvc.perform(get("/api/products")
                             .param("search", "'; DROP TABLE products--"))
@@ -71,7 +72,7 @@ class SecurityTest {
         void search_unionBasedInjection_returns200() throws Exception {
             given(productService.getProducts(anyInt(), anyInt(), eq("' UNION SELECT * FROM users--"),
                     any(), isNull(), isNull(), isNull(), isNull(), isNull(), any(), anyString()))
-                    .willReturn(new PageImpl<>(List.of()));
+                    .willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
 
             mockMvc.perform(get("/api/products")
                             .param("search", "' UNION SELECT * FROM users--"))

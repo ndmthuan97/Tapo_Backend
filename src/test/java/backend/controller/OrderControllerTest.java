@@ -113,8 +113,8 @@ class OrderControllerTest {
         @Test
         @DisplayName("ORDER-001: xem danh sách đơn của mình → 200, chỉ đơn của user đó")
         void getMyOrders_200() throws Exception {
-            Page<OrderSummary> page = new PageImpl<>(List.of(
-                    stubOrderSummary(UUID.randomUUID(), OrderStatus.PENDING)));
+            var items = List.of(stubOrderSummary(UUID.randomUUID(), OrderStatus.PENDING));
+            Page<OrderSummary> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(orderService.getMyOrders(eq(user.getId()), anyInt(), anyInt(), any()))
                     .willReturn(page);
 
@@ -127,8 +127,8 @@ class OrderControllerTest {
         @Test
         @DisplayName("ORDER-006: lọc đơn theo status=SHIPPING → 200")
         void getMyOrders_filterByStatus_200() throws Exception {
-            Page<OrderSummary> page = new PageImpl<>(List.of(
-                    stubOrderSummary(UUID.randomUUID(), OrderStatus.SHIPPING)));
+            var items = List.of(stubOrderSummary(UUID.randomUUID(), OrderStatus.SHIPPING));
+            Page<OrderSummary> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(orderService.getMyOrders(eq(user.getId()), anyInt(), anyInt(), eq(OrderStatus.SHIPPING)))
                     .willReturn(page);
 

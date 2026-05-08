@@ -195,7 +195,8 @@ class ReturnRequestControllerTest {
         @DisplayName("RETURN-003: getMyReturns → 200 with paged list of returns")
         void getMyReturns_success_200() throws Exception {
             UUID orderId = UUID.randomUUID();
-            Page<ReturnRequestDto> page = new PageImpl<>(List.of(pendingReturnDto(orderId)));
+            var items = List.of(pendingReturnDto(orderId));
+            Page<ReturnRequestDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(returnService.getMyReturns(eq(user.getId()), any())).willReturn(page);
 
             mockMvc.perform(get("/api/orders/returns"))
@@ -228,7 +229,8 @@ class ReturnRequestControllerTest {
         @Test
         @DisplayName("RETURN-004: listAll without status filter → 200 with all returns")
         void listAll_noFilter_200() throws Exception {
-            Page<ReturnRequestDto> page = new PageImpl<>(List.of(pendingReturnDto(UUID.randomUUID())));
+            var items = List.of(pendingReturnDto(UUID.randomUUID()));
+            Page<ReturnRequestDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(returnService.listAll(eq(null), any())).willReturn(page);
 
             mockMvc.perform(get("/api/admin/returns"))
@@ -241,7 +243,8 @@ class ReturnRequestControllerTest {
         @Test
         @DisplayName("RETURN-008: listAll filtered by PENDING → 200 with only PENDING returns")
         void listAll_pendingFilter_200() throws Exception {
-            Page<ReturnRequestDto> page = new PageImpl<>(List.of(pendingReturnDto(UUID.randomUUID())));
+            var items = List.of(pendingReturnDto(UUID.randomUUID()));
+            Page<ReturnRequestDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(returnService.listAll(eq(ReturnRequestStatus.PENDING), any())).willReturn(page);
 
             mockMvc.perform(get("/api/admin/returns")

@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -78,7 +79,8 @@ class ProductControllerTest {
         @Test
         @DisplayName("PROD-001: lấy danh sách mặc định → 200, page 0, size 16")
         void getProducts_default_200() throws Exception {
-            Page<ProductDto> page = new PageImpl<>(List.of(stubProductDto(UUID.randomUUID(), "Laptop", ProductStatus.ACTIVE)));
+            var items = List.of(stubProductDto(UUID.randomUUID(), "Laptop", ProductStatus.ACTIVE));
+            Page<ProductDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(productService.getProducts(anyInt(), anyInt(), any(), any(), any(), any(),
                     any(), any(), any(), any(), anyString())).willReturn(page);
 
@@ -92,7 +94,8 @@ class ProductControllerTest {
         @DisplayName("PROD-002: lọc theo categoryId → 200")
         void getProducts_filterByCategory_200() throws Exception {
             UUID catId = UUID.randomUUID();
-            Page<ProductDto> page = new PageImpl<>(List.of(stubProductDto(UUID.randomUUID(), "Phone", ProductStatus.ACTIVE)));
+            var items = List.of(stubProductDto(UUID.randomUUID(), "Phone", ProductStatus.ACTIVE));
+            Page<ProductDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(productService.getProducts(anyInt(), anyInt(), any(), any(), eq(catId), any(),
                     any(), any(), any(), any(), anyString())).willReturn(page);
 
@@ -105,7 +108,8 @@ class ProductControllerTest {
         @DisplayName("PROD-003: lọc theo brandId → 200")
         void getProducts_filterByBrand_200() throws Exception {
             UUID brandId = UUID.randomUUID();
-            Page<ProductDto> page = new PageImpl<>(List.of(stubProductDto(UUID.randomUUID(), "Dell", ProductStatus.ACTIVE)));
+            var items = List.of(stubProductDto(UUID.randomUUID(), "Dell", ProductStatus.ACTIVE));
+            Page<ProductDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(productService.getProducts(anyInt(), anyInt(), any(), any(), any(), eq(brandId),
                     any(), any(), any(), any(), anyString())).willReturn(page);
 
@@ -117,7 +121,8 @@ class ProductControllerTest {
         @Test
         @DisplayName("PROD-004: lọc theo khoảng giá → 200")
         void getProducts_filterByPrice_200() throws Exception {
-            Page<ProductDto> page = new PageImpl<>(List.of(stubProductDto(UUID.randomUUID(), "Budget Phone", ProductStatus.ACTIVE)));
+            var items = List.of(stubProductDto(UUID.randomUUID(), "Budget Phone", ProductStatus.ACTIVE));
+            Page<ProductDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(productService.getProducts(anyInt(), anyInt(), any(), any(), any(), any(),
                     eq(100_000L), eq(500_000L), any(), any(), anyString())).willReturn(page);
 
@@ -130,7 +135,8 @@ class ProductControllerTest {
         @Test
         @DisplayName("PROD-005: tìm kiếm theo tên → 200")
         void getProducts_searchByName_200() throws Exception {
-            Page<ProductDto> page = new PageImpl<>(List.of(stubProductDto(UUID.randomUUID(), "Laptop Gaming", ProductStatus.ACTIVE)));
+            var items = List.of(stubProductDto(UUID.randomUUID(), "Laptop Gaming", ProductStatus.ACTIVE));
+            Page<ProductDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(productService.getProducts(anyInt(), anyInt(), eq("laptop"), any(), any(), any(),
                     any(), any(), any(), any(), anyString())).willReturn(page);
 
@@ -142,7 +148,8 @@ class ProductControllerTest {
         @Test
         @DisplayName("PROD-006: lọc hàng còn → 200")
         void getProducts_filterInStock_200() throws Exception {
-            Page<ProductDto> page = new PageImpl<>(List.of(stubProductDto(UUID.randomUUID(), "InStock", ProductStatus.ACTIVE)));
+            var items = List.of(stubProductDto(UUID.randomUUID(), "InStock", ProductStatus.ACTIVE));
+            Page<ProductDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(productService.getProducts(anyInt(), anyInt(), any(), any(), any(), any(),
                     any(), any(), any(), eq(true), anyString())).willReturn(page);
 
@@ -153,7 +160,8 @@ class ProductControllerTest {
         @Test
         @DisplayName("PROD-007: lọc theo minRating=4 → 200")
         void getProducts_filterByRating_200() throws Exception {
-            Page<ProductDto> page = new PageImpl<>(List.of(stubProductDto(UUID.randomUUID(), "Good Product", ProductStatus.ACTIVE)));
+            var items = List.of(stubProductDto(UUID.randomUUID(), "Good Product", ProductStatus.ACTIVE));
+            Page<ProductDto> page = new PageImpl<>(items, PageRequest.of(0, 10), items.size());
             given(productService.getProducts(anyInt(), anyInt(), any(), any(), any(), any(),
                     any(), any(), eq(4.0), any(), anyString())).willReturn(page);
 
@@ -164,7 +172,7 @@ class ProductControllerTest {
         @Test
         @DisplayName("PROD-008: sắp xếp theo giá tăng dần → 200")
         void getProducts_sortByPriceAsc_200() throws Exception {
-            Page<ProductDto> page = new PageImpl<>(Collections.emptyList());
+            Page<ProductDto> page = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0);
             given(productService.getProducts(anyInt(), anyInt(), any(), any(), any(), any(),
                     any(), any(), any(), any(), eq("price,asc"))).willReturn(page);
 
@@ -175,7 +183,7 @@ class ProductControllerTest {
         @Test
         @DisplayName("PROD-009: phân trang page=2&size=10 → 200")
         void getProducts_pagination_200() throws Exception {
-            Page<ProductDto> page = new PageImpl<>(Collections.emptyList());
+            Page<ProductDto> page = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0);
             given(productService.getProducts(eq(2), eq(10), any(), any(), any(), any(),
                     any(), any(), any(), any(), anyString())).willReturn(page);
 
